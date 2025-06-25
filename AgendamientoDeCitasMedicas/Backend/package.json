@@ -1,0 +1,22 @@
+{
+  "name": "agendamiento-de-citas-medicas",
+  "version": "1.0.0",
+  "description": "Backend para agendamiento de citas médicas",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "axios": "^1.10.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^8.5.1",
+    "pg": "^8.7.1",
+    "react-router-dom": "^7.6.2"
+  },
+  "author": "Grupo 2 - Proyecto Final",
+  "license": "MIT"
+}
