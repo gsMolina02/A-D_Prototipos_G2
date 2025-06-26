@@ -1,33 +1,109 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
-import Login from './components/Login';  // Asegúrate de que la ruta sea correcta
-import Register from './components/Register';  // Asegúrate de que la ruta sea correcta
-import './App.css';  // Importa el archivo CSS
+import React, { useState } from 'react';
+import { AuthProvider, useAuth } from './components/AuthContext';
+import Login from './components/Login';
+import Register from './components/Register';
+import CalendarioLaboral from './components/CalendarioLaboral';
+import ListaCitas from './components/ListasCitas';  // <-- Importa el nuevo componente
+import './App.css';
 
+// Componente Dashboard (mostrar cuando usuario está logueado)
+const Dashboard = () => {
+  const { usuarioActual, cerrarSesion } = useAuth();
+  const [vistaActiva, setVistaActiva] = useState('perfil');
 
-const App = () => {
+  const renderVistaActiva = () => {
+    switch (vistaActiva) {
+      case 'calendario':
+        return <CalendarioLaboral />;
+      case 'citas':  // <-- Nueva vista para mostrar citas
+        return <ListaCitas />;
+      case 'perfil':
+      default:
+        return (
+          <div className="user-info">
+            <h3>Información del Usuario</h3>
+            <p><strong>Nombre:</strong> {usuarioActual.nombre} {usuarioActual.apellido}</p>
+            <p><strong>Email:</strong> {usuarioActual.email}</p>
+            <p><strong>Rol:</strong> {usuarioActual.rol}</p>
+            <p><strong>Cédula:</strong> {usuarioActual.cedula}</p>
+            <p><strong>Teléfono:</strong> {usuarioActual.telefono}</p>
+          </div>
+        );
+    }
+  };
+
   return (
-    <Router>
-      <div>
-        <h1>Agendamiento de Citas Médicas</h1>
-
-        {/* Aquí se pueden colocar los enlaces de navegación */}
-        <nav>
-          <Link to="/login">
-            <button>Iniciar Sesión</button>
-          </Link>
-          <Link to="/register">
-            <button>Registrar usuario</button>
-          </Link>
+    <div className="container">
+      <div className="dashboard">
+        <div className="dashboard-header">
+          <h2>¡Bienvenido, {usuarioActual.nombre}!</h2>
+          <button 
+            onClick={cerrarSesion}
+            className="logout-button"
+          >
+            Cerrar Sesión
+          </button>
+        </div>
+        
+        {/* Navegación del dashboard */}
+        <nav className="dashboard-nav">
+          <button 
+            className={`nav-button ${vistaActiva === 'perfil' ? 'active' : ''}`}
+            onClick={() => setVistaActiva('perfil')}
+          >
+            Mi Perfil
+          </button>
+          <button 
+            className={`nav-button ${vistaActiva === 'calendario' ? 'active' : ''}`}
+            onClick={() => setVistaActiva('calendario')}
+          >
+            Calendario Laboral
+          </button>
+          <button 
+            className={`nav-button ${vistaActiva === 'citas' ? 'active' : ''}`}
+            onClick={() => setVistaActiva('citas')}
+          >
+            Mis Citas
+          </button>
         </nav>
 
-        {/* Aquí definimos las rutas */}
-        <Switch>
-          <Route exact path="/login" component={Login} />
-          <Route exact path="/register" component={Register} />
-        </Switch>
+        {/* Contenido dinámico */}
+        <div className="dashboard-content">
+          {renderVistaActiva()}
+        </div>
       </div>
-    </Router>
+    </div>
+  );
+};
+
+// Componente que maneja las vistas
+const AuthContent = ({ currentView, setCurrentView }) => {
+  const { usuarioActual } = useAuth();
+
+  // Si hay un usuario logueado, mostrar dashboard
+  if (usuarioActual) {
+    return <Dashboard />;
+  }
+
+  // Si no hay usuario logueado, mostrar login o register
+  switch (currentView) {
+    case 'register':
+      return <Register onNavigate={setCurrentView} />;
+    default:
+      return <Login onNavigate={setCurrentView} />;
+  }
+};
+
+// Componente principal de la aplicación
+const App = () => {
+  const [currentView, setCurrentView] = useState('login');
+  
+  return (
+    <AuthProvider>
+      <div className="app">
+        <AuthContent currentView={currentView} setCurrentView={setCurrentView} />
+      </div>
+    </AuthProvider>
   );
 };
 

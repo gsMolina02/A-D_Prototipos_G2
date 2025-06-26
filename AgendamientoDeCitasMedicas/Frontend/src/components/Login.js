@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { loginUser } from '../services/api';
-import '../App.css'; // Importa el archivo CSS para estilos
+import { useAuth } from './AuthContext';
+import '../App.css';
 
-const Login = () => {
+const Login = ({ onNavigate }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
+
+  const { iniciarSesion } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -15,15 +17,20 @@ const Login = () => {
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    try {
-      const response = await loginUser(formData);
-      console.log(response); // Verifica si la respuesta es la correcta
-      alert('Login exitoso');
-    } catch (err) {
-      console.error('Error al hacer login:', err);
-      alert('Credenciales incorrectas');
+    
+    if (!formData.email || !formData.password) {
+      alert('Por favor completa todos los campos');
+      return;
+    }
+    
+    const resultado = iniciarSesion(formData.email, formData.password);
+    
+    if (resultado.success) {
+      alert(`Bienvenido, ${resultado.usuario.nombre} (${resultado.usuario.rol})`);
+    } else {
+      alert(resultado.message);
     }
   };
 
@@ -49,10 +56,30 @@ const Login = () => {
         />
         <button type="submit">Iniciar sesión</button>
       </form>
-      <a href="/register">¿No tienes una cuenta? Regístrate</a>
+      
+      {/* Si estás usando navegación con botones en lugar de enlaces */}
+      {onNavigate && (
+        <button 
+          onClick={() => onNavigate('register')}
+          className="link-button"
+        >
+          ¿No tienes una cuenta? Regístrate
+        </button>
+      )}
+      
+      {/* Si prefieres usar enlaces tradicionales */}
+      {!onNavigate && (
+        <a href="/register">¿No tienes una cuenta? Regístrate</a>
+      )}
+      
+      {/* Usuarios de prueba para facilitar testing */}
+      <div className="test-users">
+        <h4>Usuarios de prueba:</h4>
+        <p><strong>Paciente:</strong> juan@ejemplo.com / 123456</p>
+        <p><strong>Doctor:</strong> maria@ejemplo.com / admin123</p>
+      </div>
     </div>
   );
 };
 
 export default Login;
-
