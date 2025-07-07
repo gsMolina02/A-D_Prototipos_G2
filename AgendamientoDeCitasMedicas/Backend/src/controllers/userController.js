@@ -2,38 +2,48 @@
 const { query } = require('../db/db'); // Asegúrate de que esta ruta sea correcta
 
 
+// ...existing code...
 const loginUser = async (req, res) => {
-  const { email, password } = req.body; // Asegúrate de que los datos se reciban correctamente
+  const { email, password } = req.body;
+  console.log('Login attempt:', email, password);
 
   try {
     const result = await query('SELECT * FROM users WHERE email = $1', [email]);
+    console.log('DB result:', result.rows);
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Usuario no encontrado' });
+      console.log('User not found');
+      return res.status(404).json({ error: 'User not found' });
     }
 
     const user = result.rows[0];
+    console.log('Comparing passwords:', password, user.password, password === user.password);
+    console.log('Types:', typeof password, typeof user.password);
 
-    // Aquí deberías validar la contraseña (asegurándote de comparar la contraseña encriptada si es necesario)
-    if (password === user.password) {
-      res.status(200).json({ message: 'Login exitoso', user });
+    if (password.trim() === user.password.trim()) {
+      res.status(200).json({ message: 'Login successful', user });
     } else {
-      res.status(400).json({ error: 'Contraseña incorrecta' });
+      console.log('Incorrect password');
+      res.status(400).json({ error: 'Incorrect password' });
     }
   } catch (error) {
-    res.status(500).json({ error: 'Error del servidor' });
+    console.error('Server error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 };
-// Función para registro
+
 const registerUser = async (req, res) => {
-  const { email, password, name } = req.body;
-  
+  const { name, apellido, cedula, email, telefono, password, rol } = req.body;
+
   try {
-    const result = await query('INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *', [name, email, password]);
-    return res.status(201).json({ message: 'Usuario registrado', user: result.rows[0] });
+    const result = await query(
+      'INSERT INTO users (name, apellido, cedula, email, telefono, password, rol) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *',
+      [name, apellido, cedula, email, telefono, password, rol]
+    );
+    return res.status(201).json({ message: 'User registered', user: result.rows[0] });
   } catch (err) {
-    console.error('Error en registro:', err);
-    return res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Registration error:', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
 

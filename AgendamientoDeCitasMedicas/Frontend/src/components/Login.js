@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import '../App.css';
+import { loginUser } from '../services/api'; // Agrega esta línea
 
 const Login = ({ onNavigate }) => {
   const [formData, setFormData] = useState({
@@ -8,7 +9,9 @@ const Login = ({ onNavigate }) => {
     password: '',
   });
 
-  const { iniciarSesion } = useAuth();
+  const { setUsuarioActual, usuarios, registrarUsuario } = useAuth(); // agrega registrarUsuario y usuarios
+
+
 
   const handleChange = (e) => {
     setFormData({
@@ -17,22 +20,32 @@ const Login = ({ onNavigate }) => {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (!formData.email || !formData.password) {
-      alert('Por favor completa todos los campos');
-      return;
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (!formData.email || !formData.password) {
+    alert('Por favor completa todos los campos');
+    return;
+  }
+
+  try {
+    const response = await loginUser({
+      email: formData.email,
+      password: formData.password,
+    });
+
+    // Si el usuario no existe en el contexto, agrégalo (para que todo funcione igual)
+    const userFromBackend = response.data.user;
+    const exists = usuarios.some(u => u.email === userFromBackend.email);
+    if (!exists) {
+      registrarUsuario(userFromBackend);
     }
-    
-    const resultado = iniciarSesion(formData.email, formData.password);
-    
-    if (resultado.success) {
-      alert(`Bienvenido, ${resultado.usuario.nombre} (${resultado.usuario.rol})`);
-    } else {
-      alert(resultado.message);
-    }
-  };
+    setUsuarioActual(userFromBackend);
+    // El dashboard aparecerá automáticamente
+  } catch (error) {
+    alert(error.response?.data?.error || 'Error al iniciar sesión');
+  }
+};
 
   return (
     <div className="container">

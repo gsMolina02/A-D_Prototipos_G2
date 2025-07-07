@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import '../App.css';
+import { registerUser } from '../services/api'; // Agrega esta línea
+
 
 const Register = ({ onNavigate, history }) => {
   const [formData, setFormData] = useState({
-    nombre: '',
-    apellido: '',
-    cedula: '',
-    email: '',
-    telefono: '',
-    contrasena: '',
-    rol: 'paciente',
-  });
+  name: '',
+  apellido: '',
+  cedula: '',
+  email: '',
+  telefono: '',
+  password: '',
+  rol: 'paciente',
+});
 
   const [loading, setLoading] = useState(false);
 
@@ -30,61 +32,57 @@ const Register = ({ onNavigate, history }) => {
     return re.test(email);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    // Validar campos obligatorios
-    if (!formData.nombre || !formData.apellido || !formData.cedula || 
-        !formData.email || !formData.telefono || !formData.contrasena) {
-      alert('Por favor completa todos los campos');
-      return;
-    }
+  // Validar campos obligatorios
+  if (!formData.name || !formData.apellido || !formData.cedula ||
+      !formData.email || !formData.telefono || !formData.password) {
+    alert('Por favor completa todos los campos');
+    return;
+  }
 
-    if (!validarEmail(formData.email)) {
-      alert('Por favor ingresa un email válido');
-      return;
-    }
+  if (!validarEmail(formData.email)) {
+    alert('Por favor ingresa un email válido');
+    return;
+  }
 
-    // Verificar si el email ya está registrado (complemento UX)
-    const emailExiste = usuarios.some(u => u.email === formData.email);
-    if (emailExiste) {
-      alert('Este correo ya está registrado');
-      return;
-    }
-
-    setLoading(true);
-
-    const resultado = registrarUsuario(formData);
-
-    setLoading(false);
-
-    if (resultado.success) {
-      alert(resultado.message);
-      if (onNavigate) {
-        onNavigate('login');
-      } else if (history) {
-        history.push('/login');
-      } else {
-        window.location.href = '/login';
-      }
+  try {
+    const response = await registerUser({
+      name: formData.name,
+      apellido: formData.apellido,
+      cedula: formData.cedula,
+      email: formData.email,
+      telefono: formData.telefono,
+      password: formData.password,
+      rol: formData.rol,
+    });
+    alert(response.data.message);
+    if (onNavigate) {
+      onNavigate('login');
+    } else if (history) {
+      history.push('/login');
     } else {
-      alert(resultado.message);
+      window.location.href = '/login';
     }
-  };
+  } catch (error) {
+    alert(error.response?.data?.error || 'Error al registrar usuario');
+  }
+};
 
   return (
     <div className='container'>
       <h2>Registro de Usuario</h2>
       <form onSubmit={handleSubmit}>
         {/* ... inputs igual que antes ... */}
-        <input 
-          type="text" 
-          name="nombre" 
-          value={formData.nombre} 
-          onChange={handleChange} 
-          placeholder="Nombre" 
-          required 
-        />
+              <input
+        type="text"
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
+        placeholder="Nombre"
+        required
+      />
         <input 
           type="text" 
           name="apellido" 
@@ -117,14 +115,14 @@ const Register = ({ onNavigate, history }) => {
           placeholder="Teléfono" 
           required 
         />
-        <input 
-          type="password" 
-          name="contrasena" 
-          value={formData.contrasena} 
-          onChange={handleChange} 
-          placeholder="Contraseña" 
-          required 
-        />
+        <input
+  type="password"
+  name="password"
+  value={formData.password}
+  onChange={handleChange}
+  placeholder="Contraseña"
+  required
+/>
         <select 
           name="rol" 
           value={formData.rol} 

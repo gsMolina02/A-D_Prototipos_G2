@@ -1,33 +1,29 @@
 import React, { createContext, useContext, useState } from 'react';
 
-// Datos quemados iniciales
 const usuariosIniciales = [
   {
-    nombre: 'Juan',
+    name: 'Juan',
     apellido: 'Pérez',
     cedula: '1234567890',
     email: 'juan@ejemplo.com',
     telefono: '0999999999',
-    contrasena: '123456',
+    password: '123456',
     rol: 'paciente'
   },
   {
-    nombre: 'María',
+    name: 'María',
     apellido: 'García',
     cedula: '0987654321',
     email: 'maria@ejemplo.com',
     telefono: '0988888888',
-    contrasena: 'admin123',
+    password: 'admin123',
     rol: 'doctor'
   }
 ];
 
 const citasIniciales = [];
-const horariosIniciales = {
-  'maria@ejemplo.com': [] // Horarios del doctor de prueba
-};
+const horariosIniciales = {};
 
-// Crear contexto
 export const AuthContext = createContext();
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -40,18 +36,26 @@ export const AuthProvider = ({ children }) => {
   const [usuarioActual, setUsuarioActual] = useState(null);
   const [citasAgendadas, setCitasAgendadas] = useState(citasIniciales);
   const [horariosPorDoctor, setHorariosPorDoctor] = useState(horariosIniciales);
+  const [notificaciones, setNotificaciones] = useState([]);
+  const [notificacionNoLeida, setNotificacionNoLeida] = useState(false);
 
+
+  const cerrarSesion = () => {
+    setUsuarioActual(null);
+  };
+
+  // --- Lógica de registro e inicio de sesión con usuarios quemados ---
   const registrarUsuario = (nuevoUsuario) => {
     const existe = usuarios.find(u => u.email === nuevoUsuario.email);
     if (existe) {
       return { success: false, message: 'Este correo ya está registrado.' };
     }
     setUsuarios([...usuarios, nuevoUsuario]);
-    return { success: true, message: `Usuario registrado: ${nuevoUsuario.nombre}` };
+    return { success: true, message: `Usuario registrado: ${nuevoUsuario.name}` };
   };
 
   const iniciarSesion = (email, password) => {
-    const usuario = usuarios.find(u => u.email === email && u.contrasena === password);
+    const usuario = usuarios.find(u => u.email === email && u.password === password);
     if (usuario) {
       setUsuarioActual(usuario);
       return { success: true, usuario };
@@ -59,9 +63,7 @@ export const AuthProvider = ({ children }) => {
     return { success: false, message: 'Credenciales incorrectas' };
   };
 
-  const cerrarSesion = () => {
-    setUsuarioActual(null);
-  };
+  // --- Lógica de horarios y citas (sin usuarios quemados) ---
 
   const guardarHorarioDoctor = (emailDoctor, nuevoHorario) => {
     setHorariosPorDoctor(prev => {
@@ -87,9 +89,8 @@ export const AuthProvider = ({ children }) => {
     }));
   };
 
-  const obtenerNombreDoctor = (email) => {
-    const doctor = usuarios.find(u => u.email === email && u.rol === 'doctor');
-    return doctor ? `Dr/a. ${doctor.nombre} ${doctor.apellido}` : 'Doctor';
+  const obtenerNombreDoctor = (email, name, apellido) => {
+    return name && apellido ? `Dr/a. ${name} ${apellido}` : 'Doctor';
   };
 
   const agendarCita = (cita) => {
@@ -97,7 +98,6 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: 'Solo los pacientes pueden agendar citas' };
     }
 
-    // Validar que el paciente no tenga otra cita activa (pendiente o confirmada)
     const citaActiva = citasAgendadas.find(
       c => c.pacienteId === usuarioActual.email && (c.estado === 'pendiente' || c.estado === 'confirmada')
     );
@@ -106,12 +106,11 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: 'Ya tienes una cita agendada activa. No puedes agendar otra.' };
     }
 
-    // Validar si ya tiene una cita en ese día, horario y doctor (más restrictivo)
     const citaExistente = citasAgendadas.find(
       c => c.pacienteId === usuarioActual.email &&
-           c.dia === cita.dia &&
-           c.horario === cita.horario &&
-           c.doctorId === cita.doctorId
+        c.dia === cita.dia &&
+        c.horario === cita.horario &&
+        c.doctorId === cita.doctorId
     );
 
     if (citaExistente) {
@@ -122,8 +121,8 @@ export const AuthProvider = ({ children }) => {
       ...cita,
       id: Date.now(),
       pacienteId: usuarioActual.email,
-      pacienteNombre: `${usuarioActual.nombre} ${usuarioActual.apellido}`,
-      doctorNombre: obtenerNombreDoctor(cita.doctorId),
+      pacienteNombre: `${usuarioActual.name} ${usuarioActual.apellido}`,
+      doctorNombre: obtenerNombreDoctor(cita.doctorId, cita.doctorName, cita.doctorApellido),
       fechaAgendada: new Date().toISOString(),
       estado: 'pendiente',
       especialidad: cita.especialidad || 'Consulta General'
@@ -148,31 +147,48 @@ export const AuthProvider = ({ children }) => {
       .sort((a, b) => new Date(b.fechaAgendada) - new Date(a.fechaAgendada));
   };
 
-  const cancelarCita = (citaId) => {
+  const cancelarCita = (citaId, motivo) => {
+    setCitasAgendadas(prev =>
+      prev.map(c =>
+        c.id === citaId
+          ? { ...c, estado: 'cancelada', motivoCancelacion: motivo }
+          : c
+      )
+    );
+    // Busca la cita cancelada
     const cita = citasAgendadas.find(c => c.id === citaId);
-
-    if (!cita) return { success: false, message: 'Cita no encontrada' };
-
-    const esPaciente = usuarioActual?.rol === 'paciente' && cita.pacienteId === usuarioActual.email;
-    const esDoctor = usuarioActual?.rol === 'doctor' && cita.doctorId === usuarioActual.email;
-
-    if (!esPaciente && !esDoctor) {
-      return { success: false, message: 'No tienes permisos para cancelar esta cita' };
+    if (cita) {
+      const mensaje = `Cita del ${cita.dia} a las ${cita.horario} cancelada. Motivo: ${motivo}`;
+      // Notifica a doctor y paciente
+      setNotificaciones(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          mensaje,
+          leida: false,
+          destinatarios: [cita.pacienteId, cita.doctorId]
+        }
+      ]);
+      setNotificacionNoLeida(true);
     }
-
-    setCitasAgendadas(citasAgendadas.filter(c => c.id !== citaId));
     return { success: true, message: 'Cita cancelada exitosamente' };
+  };
+
+  const marcarNotificacionesLeidas = () => {
+    setNotificaciones(prev => prev.map(n => ({ ...n, leida: true })));
+    setNotificacionNoLeida(false);
   };
 
   return (
     <AuthContext.Provider value={{
       usuarios,
       usuarioActual,
-      citasAgendadas,
-      horariosPorDoctor,
+      setUsuarioActual,
+      cerrarSesion,
       registrarUsuario,
       iniciarSesion,
-      cerrarSesion,
+      citasAgendadas,
+      horariosPorDoctor,
       agendarCita,
       guardarHorarioDoctor,
       eliminarHorarioDoctor,
@@ -180,6 +196,9 @@ export const AuthProvider = ({ children }) => {
       obtenerCitasPaciente,
       obtenerCitasDoctor,
       cancelarCita,
+      notificaciones,
+      notificacionNoLeida,
+      marcarNotificacionesLeidas,
     }}>
       {children}
     </AuthContext.Provider>

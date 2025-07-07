@@ -28,7 +28,7 @@ const CalendarioLaboral = () => {
   const puedeEditar = usuarioActual && (usuarioActual.rol === 'doctor' || usuarioActual.rol === 'administrador');
 
   // Determinar de qué doctor se muestran los horarios
-  const emailDoctor = usuarioActual?.rol === 'paciente' ? 'maria@ejemplo.com' : usuarioActual?.email;
+  const emailDoctor = usuarioActual?.rol === 'paciente' ? 'axel@gmail.com' : usuarioActual?.email;
   const horarios = horariosPorDoctor[emailDoctor] || [];
   
    // Función que determina si un horario (día+horario) ya está ocupado

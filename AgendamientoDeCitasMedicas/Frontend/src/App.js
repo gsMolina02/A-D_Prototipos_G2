@@ -5,6 +5,8 @@ import Register from './components/Register';
 import CalendarioLaboral from './components/CalendarioLaboral';
 import ListaCitas from './components/ListasCitas';  // <-- Importa el nuevo componente
 import './App.css';
+import Notificaciones from './components/Notificaciones';
+
 
 // Componente Dashboard (mostrar cuando usuario está logueado)
 const Dashboard = () => {
@@ -22,7 +24,7 @@ const Dashboard = () => {
         return (
           <div className="user-info">
             <h3>Información del Usuario</h3>
-            <p><strong>Nombre:</strong> {usuarioActual.nombre} {usuarioActual.apellido}</p>
+            <p><strong>Nombre:</strong> {usuarioActual.name} {usuarioActual.apellido}</p>
             <p><strong>Email:</strong> {usuarioActual.email}</p>
             <p><strong>Rol:</strong> {usuarioActual.rol}</p>
             <p><strong>Cédula:</strong> {usuarioActual.cedula}</p>
@@ -36,7 +38,8 @@ const Dashboard = () => {
     <div className="container">
       <div className="dashboard">
         <div className="dashboard-header">
-          <h2>¡Bienvenido, {usuarioActual.nombre}!</h2>
+          <h2>¡Bienvenido, {usuarioActual.name}!</h2>
+          
           <button 
             onClick={cerrarSesion}
             className="logout-button"
@@ -46,25 +49,37 @@ const Dashboard = () => {
         </div>
         
         {/* Navegación del dashboard */}
-        <nav className="dashboard-nav">
-          <button 
-            className={`nav-button ${vistaActiva === 'perfil' ? 'active' : ''}`}
-            onClick={() => setVistaActiva('perfil')}
-          >
-            Mi Perfil
-          </button>
-          <button 
-            className={`nav-button ${vistaActiva === 'calendario' ? 'active' : ''}`}
-            onClick={() => setVistaActiva('calendario')}
-          >
-            Calendario Laboral
-          </button>
-          <button 
-            className={`nav-button ${vistaActiva === 'citas' ? 'active' : ''}`}
-            onClick={() => setVistaActiva('citas')}
-          >
-            Mis Citas
-          </button>
+        <nav
+          className="dashboard-nav"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}
+        >
+          <div>
+            <button
+              className={`nav-button ${vistaActiva === 'perfil' ? 'active' : ''}`}
+              onClick={() => setVistaActiva('perfil')}
+            >
+              Mi Perfil
+            </button>
+            <button
+              className={`nav-button ${vistaActiva === 'calendario' ? 'active' : ''}`}
+              onClick={() => setVistaActiva('calendario')}
+            >
+              Calendario Laboral
+            </button>
+            <button
+              className={`nav-button ${vistaActiva === 'citas' ? 'active' : ''}`}
+              onClick={() => setVistaActiva('citas')}
+            >
+              Mis Citas
+            </button>
+          </div>
+          <div>
+            <Notificaciones />
+          </div>
         </nav>
 
         {/* Contenido dinámico */}
