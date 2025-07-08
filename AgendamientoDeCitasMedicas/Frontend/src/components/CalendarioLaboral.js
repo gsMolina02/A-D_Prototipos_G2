@@ -22,7 +22,6 @@ const CalendarioLaboral = () => {
     duracionCita: '',
     intervalo: ''
   });
-
   const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
   const puedeEditar = usuarioActual && (usuarioActual.rol === 'doctor' || usuarioActual.rol === 'administrador');
