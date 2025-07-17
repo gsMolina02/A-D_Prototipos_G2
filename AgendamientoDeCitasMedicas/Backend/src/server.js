@@ -2,7 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const helmet = require('helmet');
-const userRoutes = require('./routes/userRoutes'); // Ruta correcta
+const userRoutes = require('./routes/userRoutes');
+const horarioRoutes = require('./routes/horarioRoutes');
+const citaRoutes = require('./routes/citaRoutes');
+const notificacionRoutes = require('./routes/notificacionRoutes');
 
 dotenv.config();
 
@@ -19,6 +22,9 @@ app.use(helmet());
 
 // Definir las rutas de la API, asegurándote de usar el prefijo "/api"
 app.use('/api', userRoutes);
+app.use('/api/horarios', horarioRoutes);
+app.use('/api/citas', citaRoutes);
+app.use('/api/notificaciones', notificacionRoutes);
 
 // Agregar ruta base para verificar que el backend está funcionando
 app.get('/', (req, res) => {

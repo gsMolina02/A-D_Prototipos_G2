@@ -1,28 +1,18 @@
 import React, { createContext, useContext, useState } from 'react';
-
-const usuariosIniciales = [
-  {
-    name: 'Juan',
-    apellido: 'Pérez',
-    cedula: '1234567890',
-    email: 'juan@ejemplo.com',
-    telefono: '0999999999',
-    password: '123456',
-    rol: 'paciente'
-  },
-  {
-    name: 'María',
-    apellido: 'García',
-    cedula: '0987654321',
-    email: 'maria@ejemplo.com',
-    telefono: '0988888888',
-    password: 'admin123',
-    rol: 'doctor'
-  }
-];
-
-const citasIniciales = [];
-const horariosIniciales = {};
+import { 
+  crearCita, 
+  obtenerCitasPorPaciente, 
+  obtenerCitasPorDoctor, 
+  cancelarCita as cancelarCitaAPI,
+  crearHorario,
+  obtenerHorariosPorDoctor,
+  obtenerTodosLosHorarios,
+  eliminarHorario,
+  limpiarHorariosDoctor,
+  registerUser,
+  loginUser,
+  marcarComoLeida
+} from '../services/api';
 
 export const AuthContext = createContext();
 export const useAuth = () => {
@@ -32,156 +22,197 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [usuarios, setUsuarios] = useState(usuariosIniciales);
   const [usuarioActual, setUsuarioActual] = useState(null);
-  const [citasAgendadas, setCitasAgendadas] = useState(citasIniciales);
-  const [horariosPorDoctor, setHorariosPorDoctor] = useState(horariosIniciales);
+  const [citasAgendadas, setCitasAgendadas] = useState([]);
+  const [horariosPorDoctor, setHorariosPorDoctor] = useState({});
   const [notificaciones, setNotificaciones] = useState([]);
   const [notificacionNoLeida, setNotificacionNoLeida] = useState(false);
-
 
   const cerrarSesion = () => {
     setUsuarioActual(null);
   };
 
-  // --- Lógica de registro e inicio de sesión con usuarios quemados ---
-  const registrarUsuario = (nuevoUsuario) => {
-    const existe = usuarios.find(u => u.email === nuevoUsuario.email);
-    if (existe) {
-      return { success: false, message: 'Este correo ya está registrado.' };
+  // --- Funciones de autenticación ---
+  const registrarUsuario = async (userData) => {
+    try {
+      const response = await registerUser(userData);
+      
+      // El backend devuelve { message: 'User registered', user }
+      if (response.data && response.data.user) {
+        setUsuarioActual(response.data.user);
+        return { success: true, message: 'Usuario registrado exitosamente' };
+      }
+      
+      return { success: false, message: response.data?.message || 'Error al registrar usuario' };
+    } catch (error) {
+      console.error('Error en registrarUsuario:', error);
+      const errorMessage = error.response?.data?.error || 'Error al registrar usuario';
+      return { success: false, message: errorMessage };
     }
-    setUsuarios([...usuarios, nuevoUsuario]);
-    return { success: true, message: `Usuario registrado: ${nuevoUsuario.name}` };
   };
 
-  const iniciarSesion = (email, password) => {
-    const usuario = usuarios.find(u => u.email === email && u.password === password);
-    if (usuario) {
-      setUsuarioActual(usuario);
-      return { success: true, usuario };
+  const iniciarSesion = async (email, password) => {
+    try {
+      const response = await loginUser({ email, password });
+      
+      // El backend devuelve { message: 'Login successful', user }
+      if (response.data && response.data.user) {
+        setUsuarioActual(response.data.user);
+        return { success: true, message: 'Sesión iniciada exitosamente' };
+      }
+      
+      return { success: false, message: response.data?.message || 'Credenciales inválidas' };
+    } catch (error) {
+      console.error('Error en iniciarSesion:', error);
+      const errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
+      return { success: false, message: errorMessage };
     }
-    return { success: false, message: 'Credenciales incorrectas' };
   };
 
-  // --- Lógica de horarios y citas (sin usuarios quemados) ---
-
-  const guardarHorarioDoctor = (emailDoctor, nuevoHorario) => {
-    setHorariosPorDoctor(prev => {
-      const actuales = prev[emailDoctor] || [];
-      return {
-        ...prev,
-        [emailDoctor]: [...actuales, nuevoHorario]
+  // --- Funciones de horarios usando Backend ---
+  const guardarHorarioDoctor = async (emailDoctor, nuevoHorario) => {
+    try {
+      const horarioData = {
+        doctor_id: usuarioActual.id,
+        dia: nuevoHorario.dia,
+        hora_inicio: nuevoHorario.horaInicio,
+        hora_fin: nuevoHorario.horaFin,
+        duracion_cita: nuevoHorario.duracionCita,
+        intervalo: nuevoHorario.intervalo
       };
-    });
+      
+      await crearHorario(horarioData);
+      // Actualizar estado local
+      setHorariosPorDoctor(prev => {
+        const actuales = prev[emailDoctor] || [];
+        return {
+          ...prev,
+          [emailDoctor]: [...actuales, nuevoHorario]
+        };
+      });
+      return { success: true, message: 'Horario guardado correctamente' };
+    } catch (error) {
+      return { success: false, message: 'Error al guardar horario' };
+    }
   };
 
-  const limpiarHorariosDoctor = (emailDoctor) => {
-    setHorariosPorDoctor(prev => ({
-      ...prev,
-      [emailDoctor]: []
-    }));
+  const limpiarHorariosDoctor = async (emailDoctor) => {
+    try {
+      await limpiarHorariosDoctor(usuarioActual.id);
+      setHorariosPorDoctor(prev => ({
+        ...prev,
+        [emailDoctor]: []
+      }));
+      return { success: true, message: 'Horarios eliminados correctamente' };
+    } catch (error) {
+      return { success: false, message: 'Error al limpiar horarios' };
+    }
   };
 
-  const eliminarHorarioDoctor = (emailDoctor, horarioId) => {
-    setHorariosPorDoctor(prev => ({
-      ...prev,
-      [emailDoctor]: prev[emailDoctor].filter(h => h.id !== horarioId)
-    }));
+  const eliminarHorarioDoctor = async (emailDoctor, horarioId) => {
+    try {
+      await eliminarHorario(horarioId);
+      setHorariosPorDoctor(prev => ({
+        ...prev,
+        [emailDoctor]: prev[emailDoctor].filter(h => h.id !== horarioId)
+      }));
+      return { success: true, message: 'Horario eliminado correctamente' };
+    } catch (error) {
+      return { success: false, message: 'Error al eliminar horario' };
+    }
+  };
+
+  const cargarHorariosPorDoctor = async (doctorId) => {
+    try {
+      const response = await obtenerHorariosPorDoctor(doctorId);
+      return response.data;
+    } catch (error) {
+      console.error('Error al cargar horarios:', error);
+      return [];
+    }
+  };
+
+  const cargarTodosLosHorarios = async () => {
+    try {
+      const response = await obtenerTodosLosHorarios();
+      return response.data;
+    } catch (error) {
+      console.error('Error al cargar horarios:', error);
+      return [];
+    }
   };
 
   const obtenerNombreDoctor = (email, name, apellido) => {
     return name && apellido ? `Dr/a. ${name} ${apellido}` : 'Doctor';
   };
 
-  const agendarCita = (cita) => {
+  // --- Funciones de citas usando Backend ---
+  const agendarCita = async (cita) => {
     if (!usuarioActual || usuarioActual.rol !== 'paciente') {
       return { success: false, message: 'Solo los pacientes pueden agendar citas' };
     }
 
-    const citaActiva = citasAgendadas.find(
-      c => c.pacienteId === usuarioActual.email && (c.estado === 'pendiente' || c.estado === 'confirmada')
-    );
+    try {
+      const citaData = {
+        paciente_id: usuarioActual.id,
+        doctor_id: cita.doctorId,
+        dia: cita.dia,
+        horario: cita.horario,
+        especialidad: cita.especialidad || 'Consulta General'
+      };
 
-    if (citaActiva) {
-      return { success: false, message: 'Ya tienes una cita agendada activa. No puedes agendar otra.' };
+      await crearCita(citaData);
+      return { success: true, message: `Cita agendada exitosamente para el ${cita.dia} a las ${cita.horario}` };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.error || 'Error al agendar cita' };
     }
+  };
 
-    const citaExistente = citasAgendadas.find(
-      c => c.pacienteId === usuarioActual.email &&
-        c.dia === cita.dia &&
-        c.horario === cita.horario &&
-        c.doctorId === cita.doctorId
-    );
-
-    if (citaExistente) {
-      return { success: false, message: 'Ya tienes una cita agendada en este horario con este doctor' };
+  const obtenerCitasPaciente = async (pacienteId) => {
+    try {
+      const response = await obtenerCitasPorPaciente(pacienteId);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener citas:', error);
+      return [];
     }
-
-    const nuevo = {
-      ...cita,
-      id: Date.now(),
-      pacienteId: usuarioActual.email,
-      pacienteNombre: `${usuarioActual.name} ${usuarioActual.apellido}`,
-      doctorNombre: obtenerNombreDoctor(cita.doctorId, cita.doctorName, cita.doctorApellido),
-      fechaAgendada: new Date().toISOString(),
-      estado: 'pendiente',
-      especialidad: cita.especialidad || 'Consulta General'
-    };
-
-    setCitasAgendadas([...citasAgendadas, nuevo]);
-    return {
-      success: true,
-      message: `Cita agendada exitosamente para el ${cita.dia} a las ${cita.horario}`
-    };
   };
 
-  const obtenerCitasPaciente = (pacienteId) => {
-    return citasAgendadas
-      .filter(c => c.pacienteId === pacienteId)
-      .sort((a, b) => new Date(b.fechaAgendada) - new Date(a.fechaAgendada));
-  };
-
-  const obtenerCitasDoctor = (doctorId) => {
-    return citasAgendadas
-      .filter(c => c.doctorId === doctorId)
-      .sort((a, b) => new Date(b.fechaAgendada) - new Date(a.fechaAgendada));
-  };
-
-  const cancelarCita = (citaId, motivo) => {
-    setCitasAgendadas(prev =>
-      prev.map(c =>
-        c.id === citaId
-          ? { ...c, estado: 'cancelada', motivoCancelacion: motivo }
-          : c
-      )
-    );
-    // Busca la cita cancelada
-    const cita = citasAgendadas.find(c => c.id === citaId);
-    if (cita) {
-      const mensaje = `Cita del ${cita.dia} a las ${cita.horario} cancelada. Motivo: ${motivo}`;
-      // Notifica a doctor y paciente
-      setNotificaciones(prev => [
-        ...prev,
-        {
-          id: Date.now(),
-          mensaje,
-          leida: false,
-          destinatarios: [cita.pacienteId, cita.doctorId]
-        }
-      ]);
-      setNotificacionNoLeida(true);
+  const obtenerCitasDoctor = async (doctorId) => {
+    try {
+      const response = await obtenerCitasPorDoctor(doctorId);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener citas:', error);
+      return [];
     }
-    return { success: true, message: 'Cita cancelada exitosamente' };
   };
 
-  const marcarNotificacionesLeidas = () => {
-    setNotificaciones(prev => prev.map(n => ({ ...n, leida: true })));
-    setNotificacionNoLeida(false);
+  const cancelarCita = async (citaId, motivo) => {
+    try {
+      await cancelarCitaAPI(citaId, motivo);
+      return { success: true, message: 'Cita cancelada exitosamente' };
+    } catch (error) {
+      return { success: false, message: 'Error al cancelar cita' };
+    }
+  };
+
+  // --- Funciones de notificaciones ---
+  const marcarNotificacionesLeidas = async () => {
+    try {
+      const notificacionesNoLeidas = notificaciones.filter(n => !n.leida);
+      await Promise.all(
+        notificacionesNoLeidas.map(n => marcarComoLeida(n.id))
+      );
+      setNotificaciones(prev => prev.map(n => ({ ...n, leida: true })));
+      setNotificacionNoLeida(false);
+    } catch (error) {
+      console.error('Error al marcar notificaciones como leídas:', error);
+    }
   };
 
   return (
     <AuthContext.Provider value={{
-      usuarios,
       usuarioActual,
       setUsuarioActual,
       cerrarSesion,
@@ -193,6 +224,8 @@ export const AuthProvider = ({ children }) => {
       guardarHorarioDoctor,
       eliminarHorarioDoctor,
       limpiarHorariosDoctor,
+      cargarHorariosPorDoctor,
+      cargarTodosLosHorarios,
       obtenerCitasPaciente,
       obtenerCitasDoctor,
       cancelarCita,

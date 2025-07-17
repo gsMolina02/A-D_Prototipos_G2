@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import './styles/CalendarioLaboral.css';
 
@@ -9,12 +9,15 @@ const CalendarioLaboral = () => {
     guardarHorarioDoctor,
     eliminarHorarioDoctor,
     limpiarHorariosDoctor,
+    cargarHorariosPorDoctor,
+    cargarTodosLosHorarios,
     agendarCita,
     citasAgendadas
-    
   } = useAuth();
 
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [horariosBackend, setHorariosBackend] = useState([]);
   const [nuevoHorario, setNuevoHorario] = useState({
     dia: 'Lunes',
     horaInicio: '',
@@ -26,11 +29,35 @@ const CalendarioLaboral = () => {
 
   const puedeEditar = usuarioActual && (usuarioActual.rol === 'doctor' || usuarioActual.rol === 'administrador');
 
+  // Cargar horarios al montar el componente
+  useEffect(() => {
+    const cargarHorarios = async () => {
+      if (!usuarioActual) return;
+      
+      setLoading(true);
+      try {
+        if (usuarioActual.rol === 'doctor') {
+          const horarios = await cargarHorariosPorDoctor(usuarioActual.id);
+          setHorariosBackend(horarios);
+        } else if (usuarioActual.rol === 'paciente') {
+          const horarios = await cargarTodosLosHorarios();
+          setHorariosBackend(horarios);
+        }
+      } catch (error) {
+        console.error('Error al cargar horarios:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarHorarios();
+  }, [usuarioActual]);
+
   // Determinar de qué doctor se muestran los horarios
   const emailDoctor = usuarioActual?.rol === 'paciente' ? 'axel@gmail.com' : usuarioActual?.email;
-  const horarios = horariosPorDoctor[emailDoctor] || [];
+  const horarios = usuarioActual?.rol === 'doctor' ? horariosBackend : horariosBackend.filter(h => h.doctor_name && h.doctor_apellido);
   
-   // Función que determina si un horario (día+horario) ya está ocupado
+  // Función que determina si un horario (día+horario) ya está ocupado
   const estaOcupado = (dia, horarioStr) => {
     return citasAgendadas.some(cita =>
       cita.doctorId === emailDoctor &&
@@ -58,36 +85,79 @@ const CalendarioLaboral = () => {
     }
     const horariosDelDia = horarios.filter(h => h.dia === horario.dia);
     for (let h of horariosDelDia) {
+      const hInicio = h.hora_inicio || h.horaInicio;
+      const hFin = h.hora_fin || h.horaFin;
       if (
-        (horaInicio >= h.horaInicio && horaInicio < h.horaFin) ||
-        (horaFin > h.horaInicio && horaFin <= h.horaFin) ||
-        (horaInicio <= h.horaInicio && horaFin >= h.horaFin)
+        (horaInicio >= hInicio && horaInicio < hFin) ||
+        (horaFin > hInicio && horaFin <= hFin) ||
+        (horaInicio <= hInicio && horaFin >= hFin)
       ) {
-        return `Ya existe un horario que se solapa en ${horario.dia} (${h.horaInicio} - ${h.horaFin})`;
+        return `Ya existe un horario que se solapa en ${horario.dia} (${hInicio} - ${hFin})`;
       }
     }
     return null;
   };
 
-  const agregarHorario = (e) => {
+  const agregarHorario = async (e) => {
     e.preventDefault();
     if (!puedeEditar) return setError('No tienes permisos para agregar horarios.');
     const errorValidacion = validarHorario(nuevoHorario);
     if (errorValidacion) return setError(errorValidacion);
 
-    guardarHorarioDoctor(emailDoctor, { ...nuevoHorario, id: Date.now() });
-    setNuevoHorario({ dia: 'Lunes', horaInicio: '', horaFin: '', duracionCita: '', intervalo: '' });
+    setLoading(true);
+    try {
+      const result = await guardarHorarioDoctor(emailDoctor, { ...nuevoHorario, id: Date.now() });
+      if (result.success) {
+        setNuevoHorario({ dia: 'Lunes', horaInicio: '', horaFin: '', duracionCita: '', intervalo: '' });
+        // Recargar horarios
+        const horarios = await cargarHorariosPorDoctor(usuarioActual.id);
+        setHorariosBackend(horarios);
+      } else {
+        setError(result.message);
+      }
+    } catch (error) {
+      setError('Error al guardar horario');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const eliminar = (id) => {
+  const eliminar = async (id) => {
     if (!puedeEditar) return alert('No tienes permisos para eliminar horarios.');
-    eliminarHorarioDoctor(emailDoctor, id);
+    
+    setLoading(true);
+    try {
+      const result = await eliminarHorarioDoctor(emailDoctor, id);
+      if (result.success) {
+        // Recargar horarios
+        const horarios = await cargarHorariosPorDoctor(usuarioActual.id);
+        setHorariosBackend(horarios);
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      alert('Error al eliminar horario');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const limpiarTodosLosHorarios = () => {
+  const limpiarTodosLosHorarios = async () => {
     if (!puedeEditar) return alert('No tienes permisos para limpiar horarios.');
     if (window.confirm('¿Eliminar todos los horarios?')) {
-      limpiarHorariosDoctor(emailDoctor);
+      setLoading(true);
+      try {
+        const result = await limpiarHorariosDoctor(emailDoctor);
+        if (result.success) {
+          setHorariosBackend([]);
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        alert('Error al limpiar horarios');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
