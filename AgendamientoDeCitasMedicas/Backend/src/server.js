@@ -40,4 +40,25 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
+  
+  // Inicializar sistema de recordatorios
+  inicializarRecordatorios();
 });
+
+// Sistema de recordatorios automático
+function inicializarRecordatorios() {
+  const { enviarRecordatoriosCitas } = require('./controllers/citaController');
+  
+  console.log('🔔 Sistema de recordatorios iniciado');
+  
+  // Ejecutar inmediatamente al iniciar el servidor
+  enviarRecordatoriosCitas();
+  
+  // Ejecutar cada hora (3600000 ms = 1 hora)
+  setInterval(async () => {
+    console.log('⏰ Ejecutando verificación de recordatorios programada...');
+    await enviarRecordatoriosCitas();
+  }, 3600000); // 1 hora
+  
+  console.log('✅ Recordatorios programados para ejecutarse cada hora');
+}

@@ -243,3 +243,38 @@
   cursor: not-allowed;
   opacity: 0.6;
 }
+
+/* Estilos mejorados para citas ocupadas y disponibles */
+.cita-item.ocupado {
+  background-color: #ffe6e6;
+  border: 1px solid #ff9999;
+  border-radius: 5px;
+  padding: 8px;
+  margin: 5px 0;
+}
+
+.cita-item.disponible {
+  background-color: #e6ffe6;
+  border: 1px solid #99ff99;
+  border-radius: 5px;
+  padding: 8px;
+  margin: 5px 0;
+}
+
+.btn-ocupado {
+  background-color: #dc3545 !important;
+  color: white;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-ocupado:hover {
+  background-color: #dc3545 !important;
+}
+
+.estado-ocupado {
+  margin-left: 10px;
+  font-size: 12px;
+  color: #dc3545;
+  font-weight: bold;
+}

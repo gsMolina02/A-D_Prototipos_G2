@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import '../App.css';
-import { loginUser } from '../services/api'; // Agrega esta línea
 
 const Login = ({ onNavigate }) => {
   const [formData, setFormData] = useState({
@@ -9,7 +8,7 @@ const Login = ({ onNavigate }) => {
     password: '',
   });
 
-  const { setUsuarioActual, usuarios, registrarUsuario } = useAuth(); // agrega registrarUsuario y usuarios
+  const { iniciarSesion } = useAuth();
 
 
 
@@ -21,31 +20,27 @@ const Login = ({ onNavigate }) => {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!formData.email || !formData.password) {
-    alert('Por favor completa todos los campos');
-    return;
-  }
-
-  try {
-    const response = await loginUser({
-      email: formData.email,
-      password: formData.password,
-    });
-
-    // Si el usuario no existe en el contexto, agrégalo (para que todo funcione igual)
-    const userFromBackend = response.data.user;
-    const exists = usuarios.some(u => u.email === userFromBackend.email);
-    if (!exists) {
-      registrarUsuario(userFromBackend);
+    if (!formData.email || !formData.password) {
+      alert('Por favor completa todos los campos');
+      return;
     }
-    setUsuarioActual(userFromBackend);
-    // El dashboard aparecerá automáticamente
-  } catch (error) {
-    alert(error.response?.data?.error || 'Error al iniciar sesión');
-  }
-};
+
+    try {
+      const result = await iniciarSesion(formData.email, formData.password);
+      
+      if (result.success) {
+        // El usuario ya está establecido en el contexto
+        alert('Sesión iniciada exitosamente');
+      } else {
+        alert(result.message || 'Error al iniciar sesión');
+      }
+    } catch (error) {
+      console.error('Error en login:', error);
+      alert('Error al iniciar sesión');
+    }
+  };
 
   return (
     <div className="container">
@@ -88,8 +83,8 @@ const Login = ({ onNavigate }) => {
       {/* Usuarios de prueba para facilitar testing */}
       <div className="test-users">
         <h4>Usuarios de prueba:</h4>
-        <p><strong>Paciente:</strong> juan@ejemplo.com / 123456</p>
-        <p><strong>Doctor:</strong> maria@ejemplo.com / admin123</p>
+        <p><strong>Doctor:</strong> axel@gmail.com / 1234</p>
+        <p><strong>Paciente:</strong> juan@example.com / tu_contraseña</p>
       </div>
     </div>
   );

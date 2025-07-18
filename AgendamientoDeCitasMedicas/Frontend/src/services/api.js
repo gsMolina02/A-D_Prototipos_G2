@@ -45,6 +45,10 @@ export const obtenerCitasPorDoctor = async (doctorId) => {
   return await axios.get(`${apiUrl}/citas/doctor/${doctorId}`);
 };
 
+export const obtenerTodasLasCitas = async () => {
+  return await axios.get(`${apiUrl}/citas`);
+};
+
 export const cancelarCita = async (id, motivo) => {
   return await axios.put(`${apiUrl}/citas/${id}/cancelar`, { motivo });
 };

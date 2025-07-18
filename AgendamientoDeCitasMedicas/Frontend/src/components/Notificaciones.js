@@ -2,16 +2,13 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 
 const Notificaciones = () => {
-  const { usuarioActual, notificaciones, notificacionNoLeida, marcarNotificacionesLeidas } = useAuth();
+  const { usuarioActual, notificaciones = [], notificacionNoLeida, marcarNotificacionesLeidas } = useAuth();
   const [visible, setVisible] = useState(false);
 
-  // Filtra notificaciones para el usuario actual y que no tengan más de 1 día
-  const ahora = Date.now();
-  const unDiaMs = 24 * 60 * 60 * 1000;
-  const misNotificaciones = notificaciones.filter(n =>
-    n.destinatarios.includes(usuarioActual?.email) &&
-    ahora - n.id < unDiaMs
-  );
+  // Filtra notificaciones para el usuario actual
+  const misNotificaciones = notificaciones.filter(n => {
+    return n.destinatario_id === usuarioActual?.id;
+  });
 
   const handleToggle = () => {
     setVisible(v => {

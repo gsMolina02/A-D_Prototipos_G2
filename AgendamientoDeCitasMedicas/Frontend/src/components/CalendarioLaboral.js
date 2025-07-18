@@ -11,8 +11,10 @@ const CalendarioLaboral = () => {
     limpiarHorariosDoctor,
     cargarHorariosPorDoctor,
     cargarTodosLosHorarios,
+    cargarTodasLasCitas,
     agendarCita,
-    citasAgendadas
+    citasAgendadas,
+    todasLasCitas
   } = useAuth();
 
   const [error, setError] = useState('');
@@ -32,17 +34,32 @@ const CalendarioLaboral = () => {
   // Cargar horarios al montar el componente
   useEffect(() => {
     const cargarHorarios = async () => {
-      if (!usuarioActual) return;
+      if (!usuarioActual) {
+        console.log('No hay usuario actual, no se cargan horarios');
+        return;
+      }
       
+      console.log('Cargando horarios para usuario:', usuarioActual.rol, usuarioActual.id);
       setLoading(true);
       try {
+        // Cargar horarios según el rol
         if (usuarioActual.rol === 'doctor') {
+          console.log('Cargando horarios para doctor ID:', usuarioActual.id);
           const horarios = await cargarHorariosPorDoctor(usuarioActual.id);
+          console.log('Horarios del doctor cargados:', horarios);
           setHorariosBackend(horarios);
         } else if (usuarioActual.rol === 'paciente') {
+          console.log('Cargando todos los horarios para paciente');
           const horarios = await cargarTodosLosHorarios();
+          console.log('Todos los horarios cargados:', horarios);
           setHorariosBackend(horarios);
         }
+        
+        // Cargar todas las citas para verificar disponibilidad
+        console.log('Cargando todas las citas...');
+        await cargarTodasLasCitas();
+        console.log('Citas cargadas exitosamente');
+        
       } catch (error) {
         console.error('Error al cargar horarios:', error);
       } finally {
@@ -51,20 +68,39 @@ const CalendarioLaboral = () => {
     };
 
     cargarHorarios();
-  }, [usuarioActual]);
+  }, [usuarioActual, cargarHorariosPorDoctor, cargarTodosLosHorarios, cargarTodasLasCitas]);
 
   // Determinar de qué doctor se muestran los horarios
   const emailDoctor = usuarioActual?.rol === 'paciente' ? 'axel@gmail.com' : usuarioActual?.email;
   const horarios = usuarioActual?.rol === 'doctor' ? horariosBackend : horariosBackend.filter(h => h.doctor_name && h.doctor_apellido);
   
+  console.log('Estado actual:', {
+    usuarioActual: usuarioActual?.rol,
+    horariosBackend: horariosBackend,
+    horarios: horarios,
+    emailDoctor: emailDoctor
+  });
+  
   // Función que determina si un horario (día+horario) ya está ocupado
-  const estaOcupado = (dia, horarioStr) => {
-    return citasAgendadas.some(cita =>
-      cita.doctorId === emailDoctor &&
-      cita.dia === dia &&
-      cita.horario === horarioStr &&
-      cita.estado !== 'cancelada' // solo citas activas cuentan
-    );
+  const estaOcupado = (dia, horarioStr, doctorId) => {
+    console.log('🔍 Verificando disponibilidad:', { dia, horarioStr, doctorId });
+    console.log('📋 Todas las citas:', todasLasCitas);
+    
+    const ocupado = todasLasCitas.some(cita => {
+      const coincide = cita.doctor_id === doctorId &&
+                     cita.dia === dia &&
+                     cita.horario === horarioStr &&
+                     cita.estado !== 'cancelada';
+      
+      if (coincide) {
+        console.log('❌ Cita ocupada encontrada:', cita);
+      }
+      
+      return coincide;
+    });
+    
+    console.log(`✅ Resultado: ${ocupado ? 'OCUPADO' : 'DISPONIBLE'}`);
+    return ocupado;
   };
 
   const handleChange = (e) => {
@@ -162,45 +198,171 @@ const CalendarioLaboral = () => {
   };
 
   const calcularCitasPosibles = (horario) => {
-    const inicio = new Date(`1970-01-01T${horario.horaInicio}:00`);
-    const fin = new Date(`1970-01-01T${horario.horaFin}:00`);
+    console.log('🔍 Calculando citas posibles para:', horario);
+    
+    // Extraer datos con compatibilidad backend/frontend
+    let horaInicio = horario.hora_inicio || horario.horaInicio;
+    let horaFin = horario.hora_fin || horario.horaFin;
+    const duracionCita = horario.duracion_cita || horario.duracionCita;
+    const intervalo = horario.intervalo;
+    
+    // Si viene del backend, las horas incluyen segundos (ej: "09:00:00")
+    // Necesitamos solo HH:MM para crear el Date
+    if (horaInicio && horaInicio.includes(':')) {
+      horaInicio = horaInicio.substring(0, 5); // "09:00:00" -> "09:00"
+    }
+    if (horaFin && horaFin.includes(':')) {
+      horaFin = horaFin.substring(0, 5); // "12:00:00" -> "12:00"
+    }
+    
+    console.log('📊 Datos extraídos y procesados:', {
+      horaInicio,
+      horaFin,
+      duracionCita,
+      intervalo,
+      'typeof duracionCita': typeof duracionCita,
+      'typeof intervalo': typeof intervalo
+    });
+    
+    if (!horaInicio || !horaFin || !duracionCita || intervalo === undefined) {
+      console.log('❌ Faltan datos, retornando 0');
+      return 0;
+    }
+    
+    const inicio = new Date(`1970-01-01T${horaInicio}:00`);
+    const fin = new Date(`1970-01-01T${horaFin}:00`);
     const duracionTotal = (fin - inicio) / (1000 * 60);
-    const tiempoPorCita = parseInt(horario.duracionCita) + parseInt(horario.intervalo);
-    return Math.floor(duracionTotal / tiempoPorCita);
+    
+    // Convertir a números (pueden venir como números del backend o strings del frontend)
+    const duracionNum = typeof duracionCita === 'number' ? duracionCita : parseInt(duracionCita);
+    const intervaloNum = typeof intervalo === 'number' ? intervalo : parseInt(intervalo);
+    
+    console.log('🧮 Cálculos:', {
+      inicio: inicio.toTimeString(),
+      fin: fin.toTimeString(),
+      duracionTotal,
+      duracionNum,
+      intervaloNum,
+      'isNaN duracionNum': isNaN(duracionNum),
+      'isNaN intervaloNum': isNaN(intervaloNum)
+    });
+    
+    if (isNaN(duracionNum) || isNaN(intervaloNum) || duracionNum <= 0) {
+      console.log('❌ NaN detectado, retornando 0');
+      return 0;
+    }
+    
+    const tiempoPorCita = duracionNum + intervaloNum;
+    const resultado = Math.floor(duracionTotal / tiempoPorCita);
+    
+    console.log('✅ Resultado final:', resultado);
+    return resultado;
   };
 
   const generarHorariosCitas = (horario) => {
+    console.log('🕐 Generando horarios de citas para:', horario);
+    
     const citas = [];
-    const inicio = new Date(`1970-01-01T${horario.horaInicio}:00`);
-    const fin = new Date(`1970-01-01T${horario.horaFin}:00`);
+    
+    // Extraer datos con compatibilidad backend/frontend
+    let horaInicio = horario.hora_inicio || horario.horaInicio;
+    let horaFin = horario.hora_fin || horario.horaFin;
+    const duracionCita = horario.duracion_cita || horario.duracionCita;
+    const intervalo = horario.intervalo;
+    
+    // Si viene del backend, las horas incluyen segundos (ej: "09:00:00")
+    if (horaInicio && horaInicio.includes(':')) {
+      horaInicio = horaInicio.substring(0, 5);
+    }
+    if (horaFin && horaFin.includes(':')) {
+      horaFin = horaFin.substring(0, 5);
+    }
+    
+    console.log('📊 Datos para generar citas procesados:', {
+      horaInicio,
+      horaFin,
+      duracionCita,
+      intervalo,
+      'typeof duracionCita': typeof duracionCita,
+      'typeof intervalo': typeof intervalo
+    });
+    
+    if (!horaInicio || !horaFin || !duracionCita || intervalo === undefined) {
+      console.log('❌ Faltan datos para generar citas');
+      return [];
+    }
+    
+    const inicio = new Date(`1970-01-01T${horaInicio}:00`);
+    const fin = new Date(`1970-01-01T${horaFin}:00`);
     let actual = new Date(inicio);
 
-    const duracion = parseInt(horario.duracionCita);
-    const intervalo = parseInt(horario.intervalo);
+    // Convertir a números
+    const duracion = typeof duracionCita === 'number' ? duracionCita : parseInt(duracionCita);
+    const intervaloNum = typeof intervalo === 'number' ? intervalo : parseInt(intervalo);
+    
+    console.log('🧮 Valores parseados:', {
+      duracion,
+      intervaloNum,
+      isNaN_duracion: isNaN(duracion),
+      isNaN_intervalo: isNaN(intervaloNum)
+    });
+    
+    if (isNaN(duracion) || isNaN(intervaloNum) || duracion <= 0) {
+      console.log('❌ NaN detectado en generación de citas');
+      return [];
+    }
 
     while (actual < fin) {
       const inicioCita = actual.toTimeString().slice(0, 5);
       actual.setMinutes(actual.getMinutes() + duracion);
       const finCita = actual.toTimeString().slice(0, 5);
+      
+      // Verificar que la cita completa esté dentro del horario
       if (actual <= fin) {
-        citas.push(`${inicioCita} - ${finCita}`);
+        const citaStr = `${inicioCita} - ${finCita}`;
+        citas.push(citaStr);
+        console.log('✅ Cita generada:', citaStr);
+      } else {
+        console.log('⏰ Cita excede horario:', `${inicioCita} - ${finCita}`);
+        break;
       }
-      actual.setMinutes(actual.getMinutes() + intervalo);
+      
+      // Agregar intervalo para la siguiente cita
+      actual.setMinutes(actual.getMinutes() + intervaloNum);
     }
+    
+    console.log('📋 Total de citas generadas:', citas.length);
     return citas;
   };
 
-  const handleAgendarCita = (horario, citaStr) => {
+  const handleAgendarCita = async (horario, citaStr) => {
     if (!usuarioActual) return alert('Debes iniciar sesión.');
+    if (usuarioActual.rol !== 'paciente') return alert('Solo los pacientes pueden agendar citas.');
+    
     const confirmacion = window.confirm(`¿Agendar cita para ${horario.dia} ${citaStr}?`);
     if (!confirmacion) return;
-    const resultado = agendarCita({
+    
+    // Obtener el ID del doctor desde el horario
+    const doctorId = horario.doctor_id || 3; // 3 es el ID del doctor axel@gmail.com
+    
+    const resultado = await agendarCita({
       dia: horario.dia,
       horario: citaStr,
-      doctorId: emailDoctor,
-      especialidad: 'Consulta General'
+      doctorId: doctorId,
+      especialidad: 'Consulta General' // Sin especialidad específica
     });
-    alert(resultado.message);
+    
+    if (resultado.success) {
+      alert('✅ ' + resultado.message);
+      // Recargar tanto horarios como citas para actualizar disponibilidad
+      await cargarTodasLasCitas();
+      if (usuarioActual.rol === 'paciente') {
+        const horarios = await cargarTodosLosHorarios();
+        setHorariosBackend(horarios);
+      }
+    } else {
+      alert('❌ ' + resultado.message);
+    }
   };
 
   return (
@@ -269,27 +431,38 @@ const CalendarioLaboral = () => {
                         <button className="btn-eliminar" onClick={() => eliminar(horario.id)}>×</button>
                       )}
                       <div>
-                        <p><strong>🕐 Horario:</strong> {horario.horaInicio} - {horario.horaFin}</p>
-                        <p><strong>⏱️ Duración:</strong> {horario.duracionCita} min</p>
+                        {horario.doctor_name && (
+                          <p><strong>👨‍⚕️ Doctor:</strong> {horario.doctor_name} {horario.doctor_apellido}</p>
+                        )}
+                        <p><strong>🕐 Horario:</strong> {(horario.hora_inicio || horario.horaInicio).substring(0, 5)} - {(horario.hora_fin || horario.horaFin).substring(0, 5)}</p>
+                        <p><strong>⏱️ Duración:</strong> {horario.duracion_cita || horario.duracionCita} min</p>
                         <p><strong>⏸️ Intervalo:</strong> {horario.intervalo} min</p>
-                        <p><strong>📊 Citas posibles:</strong> {calcularCitasPosibles(horario)}</p>
+                        <p><strong>📊 Citas posibles:</strong> {(() => {
+                          const citasPosibles = calcularCitasPosibles(horario);
+                          console.log('Calculando citas para horario:', horario);
+                          console.log('Citas posibles calculadas:', citasPosibles);
+                          return citasPosibles;
+                        })()}</p>
                       </div>
                       <details>
-                        <summary>👁️ Ver horarios disponibles</summary>
+                        <summary>👁️ Ver horarios de citas disponibles</summary>
                         <div className="details-citas">
                           {generarHorariosCitas(horario).map((cita, idx) => {
-  const ocupado = estaOcupado(dia, cita);
+  const ocupado = estaOcupado(dia, cita, horario.doctor_id);
   return (
-    <div key={idx} className={`cita-item ${ocupado ? 'ocupado' : ''}`}>
-      <span>{cita}</span>
+    <div key={idx} className={`cita-item ${ocupado ? 'ocupado' : 'disponible'}`}>
+      <span>🕒 {cita}</span>
       {usuarioActual?.rol === 'paciente' && (
         <button
-          className="btn-agendar"
+          className={`btn-agendar ${ocupado ? 'btn-ocupado' : ''}`}
           onClick={() => handleAgendarCita(horario, cita)}
-          disabled={ocupado} // <--- deshabilita si está ocupado
+          disabled={ocupado}
         >
-          {ocupado ? 'Ocupado' : 'Agendar'} 
+          {ocupado ? '❌ No disponible' : '✅ Agendar'} 
         </button>
+      )}
+      {ocupado && (
+        <span className="estado-ocupado">🔴 Ocupado</span>
       )}
     </div>
   );

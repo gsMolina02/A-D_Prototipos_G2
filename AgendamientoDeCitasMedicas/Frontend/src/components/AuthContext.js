@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { 
   crearCita, 
   obtenerCitasPorPaciente, 
-  obtenerCitasPorDoctor, 
+  obtenerCitasPorDoctor,
+  obtenerTodasLasCitas,
   cancelarCita as cancelarCitaAPI,
   crearHorario,
   obtenerHorariosPorDoctor,
@@ -11,7 +12,8 @@ import {
   limpiarHorariosDoctor,
   registerUser,
   loginUser,
-  marcarComoLeida
+  marcarComoLeida,
+  obtenerNotificacionesPorUsuario
 } from '../services/api';
 
 export const AuthContext = createContext();
@@ -24,6 +26,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [usuarioActual, setUsuarioActual] = useState(null);
   const [citasAgendadas, setCitasAgendadas] = useState([]);
+  const [todasLasCitas, setTodasLasCitas] = useState([]);
   const [horariosPorDoctor, setHorariosPorDoctor] = useState({});
   const [notificaciones, setNotificaciones] = useState([]);
   const [notificacionNoLeida, setNotificacionNoLeida] = useState(false);
@@ -58,6 +61,7 @@ export const AuthProvider = ({ children }) => {
       // El backend devuelve { message: 'Login successful', user }
       if (response.data && response.data.user) {
         setUsuarioActual(response.data.user);
+        
         return { success: true, message: 'Sesión iniciada exitosamente' };
       }
       
@@ -125,6 +129,7 @@ export const AuthProvider = ({ children }) => {
   const cargarHorariosPorDoctor = async (doctorId) => {
     try {
       const response = await obtenerHorariosPorDoctor(doctorId);
+      console.log('Horarios cargados para doctor:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error al cargar horarios:', error);
@@ -135,6 +140,7 @@ export const AuthProvider = ({ children }) => {
   const cargarTodosLosHorarios = async () => {
     try {
       const response = await obtenerTodosLosHorarios();
+      console.log('Todos los horarios cargados:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error al cargar horarios:', error);
@@ -162,6 +168,10 @@ export const AuthProvider = ({ children }) => {
       };
 
       await crearCita(citaData);
+      
+      // Cargar notificaciones actualizadas después de agendar
+      await cargarNotificaciones();
+      
       return { success: true, message: `Cita agendada exitosamente para el ${cita.dia} a las ${cita.horario}` };
     } catch (error) {
       return { success: false, message: error.response?.data?.error || 'Error al agendar cita' };
@@ -188,9 +198,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const cargarTodasLasCitas = async () => {
+    try {
+      const response = await obtenerTodasLasCitas();
+      setTodasLasCitas(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error al cargar todas las citas:', error);
+      return [];
+    }
+  };
+
   const cancelarCita = async (citaId, motivo) => {
     try {
       await cancelarCitaAPI(citaId, motivo);
+      
+      // Cargar notificaciones actualizadas después de cancelar
+      await cargarNotificaciones();
+      
       return { success: true, message: 'Cita cancelada exitosamente' };
     } catch (error) {
       return { success: false, message: 'Error al cancelar cita' };
@@ -198,6 +223,32 @@ export const AuthProvider = ({ children }) => {
   };
 
   // --- Funciones de notificaciones ---
+  const cargarNotificaciones = async () => {
+    if (!usuarioActual) return;
+    
+    try {
+      const response = await obtenerNotificacionesPorUsuario(usuarioActual.id);
+      setNotificaciones(response.data);
+      
+      // Verificar si hay notificaciones no leídas
+      const hayNoLeidas = response.data.some(n => !n.leida);
+      setNotificacionNoLeida(hayNoLeidas);
+    } catch (error) {
+      console.error('Error al cargar notificaciones:', error);
+    }
+  };
+
+  // Cargar notificaciones cuando el usuario cambie
+  useEffect(() => {
+    if (usuarioActual?.id) {
+      console.log('AuthContext: Cargando notificaciones para usuario', usuarioActual.id);
+      cargarNotificaciones();
+    } else {
+      setNotificaciones([]);
+      setNotificacionNoLeida(false);
+    }
+  }, [usuarioActual?.id]);
+
   const marcarNotificacionesLeidas = async () => {
     try {
       const notificacionesNoLeidas = notificaciones.filter(n => !n.leida);
@@ -219,6 +270,7 @@ export const AuthProvider = ({ children }) => {
       registrarUsuario,
       iniciarSesion,
       citasAgendadas,
+      todasLasCitas,
       horariosPorDoctor,
       agendarCita,
       guardarHorarioDoctor,
@@ -226,11 +278,13 @@ export const AuthProvider = ({ children }) => {
       limpiarHorariosDoctor,
       cargarHorariosPorDoctor,
       cargarTodosLosHorarios,
+      cargarTodasLasCitas,
       obtenerCitasPaciente,
       obtenerCitasDoctor,
       cancelarCita,
       notificaciones,
       notificacionNoLeida,
+      cargarNotificaciones,
       marcarNotificacionesLeidas,
     }}>
       {children}
