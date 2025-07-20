@@ -5,25 +5,19 @@ const { query } = require('../db/db'); // Asegúrate de que esta ruta sea correc
 // ...existing code...
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
-  console.log('Login attempt:', email, password);
 
   try {
     const result = await query('SELECT * FROM users WHERE email = $1', [email]);
-    console.log('DB result:', result.rows);
 
     if (result.rows.length === 0) {
-      console.log('User not found');
       return res.status(404).json({ error: 'User not found' });
     }
 
     const user = result.rows[0];
-    console.log('Comparing passwords:', password, user.password, password === user.password);
-    console.log('Types:', typeof password, typeof user.password);
 
     if (password.trim() === user.password.trim()) {
       res.status(200).json({ message: 'Login successful', user });
     } else {
-      console.log('Incorrect password');
       res.status(400).json({ error: 'Incorrect password' });
     }
   } catch (error) {

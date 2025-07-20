@@ -129,7 +129,6 @@ export const AuthProvider = ({ children }) => {
   const cargarHorariosPorDoctor = async (doctorId) => {
     try {
       const response = await obtenerHorariosPorDoctor(doctorId);
-      console.log('Horarios cargados para doctor:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error al cargar horarios:', error);
@@ -140,7 +139,6 @@ export const AuthProvider = ({ children }) => {
   const cargarTodosLosHorarios = async () => {
     try {
       const response = await obtenerTodosLosHorarios();
-      console.log('Todos los horarios cargados:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error al cargar horarios:', error);
@@ -241,7 +239,6 @@ export const AuthProvider = ({ children }) => {
   // Cargar notificaciones cuando el usuario cambie
   useEffect(() => {
     if (usuarioActual?.id) {
-      console.log('AuthContext: Cargando notificaciones para usuario', usuarioActual.id);
       cargarNotificaciones();
     } else {
       setNotificaciones([]);

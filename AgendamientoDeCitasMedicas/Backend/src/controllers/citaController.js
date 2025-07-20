@@ -51,8 +51,6 @@ const crearCita = async (req, res) => {
       [mensajeDoctor, doctor_id]
     );
 
-    console.log(`📢 Notificaciones de nueva cita creadas para cita ${nuevaCita.id}`);
-
     res.status(201).json({ 
       message: 'Cita agendada exitosamente y notificaciones enviadas', 
       cita: nuevaCita 
@@ -149,8 +147,6 @@ const cancelarCita = async (req, res) => {
       [mensajeDoctor, cita.doctor_id]
     );
 
-    console.log(`📢 Notificaciones de cancelación creadas para cita ${id}`);
-
     res.status(200).json({ 
       message: 'Cita cancelada exitosamente y notificaciones enviadas', 
       cita: result.rows[0] 
@@ -185,8 +181,6 @@ const obtenerTodasLasCitas = async (req, res) => {
 // Función para enviar recordatorios de citas (24 horas antes)
 const enviarRecordatoriosCitas = async () => {
   try {
-    console.log('🔔 Verificando citas para enviar recordatorios...');
-    
     // Calcular fecha y hora objetivo (24 horas desde ahora)
     const ahora = new Date();
     const en24Horas = new Date(ahora.getTime() + 24 * 60 * 60 * 1000);
@@ -207,8 +201,6 @@ const enviarRecordatoriosCitas = async () => {
     
     const result = await query(citasQuery, [fechaObjetivo]);
     const citas = result.rows;
-    
-    console.log(`📅 Encontradas ${citas.length} citas para ${fechaObjetivo}`);
     
     for (const cita of citas) {
       // Verificar si ya se envió recordatorio para esta cita
@@ -233,10 +225,6 @@ const enviarRecordatoriosCitas = async () => {
           'INSERT INTO notificaciones (mensaje, destinatario_id) VALUES ($1, $2)',
           [mensajeDoctor, cita.doctor_id]
         );
-        
-        console.log(`✅ Recordatorios enviados para cita ${cita.id} (${cita.dia} ${cita.horario})`);
-      } else {
-        console.log(`ℹ️ Recordatorio ya enviado para cita ${cita.id}`);
       }
     }
     
