@@ -178,6 +178,94 @@ const obtenerTodasLasCitas = async (req, res) => {
   }
 };
 
+// Reprogramar cita
+const reprogramarCita = async (req, res) => {
+  const { id } = req.params;
+  const { nuevo_dia, nuevo_horario, motivo } = req.body;
+
+  try {
+    // Primero obtener la información completa de la cita actual
+    const citaActualInfo = await query(`
+      SELECT c.*, 
+             p.name as paciente_name, p.apellido as paciente_apellido,
+             d.name as doctor_name, d.apellido as doctor_apellido
+      FROM citas c
+      JOIN users p ON c.paciente_id = p.id
+      JOIN users d ON c.doctor_id = d.id
+      WHERE c.id = $1 AND c.estado != 'cancelada'
+    `, [id]);
+
+    if (citaActualInfo.rows.length === 0) {
+      return res.status(404).json({ error: 'Cita no encontrada o ya está cancelada' });
+    }
+
+    const citaActual = citaActualInfo.rows[0];
+
+    // Verificar si ya existe una cita en el nuevo horario
+    const citaExistente = await query(
+      'SELECT * FROM citas WHERE doctor_id = $1 AND dia = $2 AND horario = $3 AND estado != $4 AND id != $5',
+      [citaActual.doctor_id, nuevo_dia, nuevo_horario, 'cancelada', id]
+    );
+
+    if (citaExistente.rows.length > 0) {
+      return res.status(400).json({ error: 'Ya existe una cita en el nuevo horario seleccionado' });
+    }
+
+    // Guardar información de la cita anterior para las notificaciones
+    const fechaAnterior = `${citaActual.dia} ${citaActual.horario}`;
+    const fechaNueva = `${nuevo_dia} ${nuevo_horario}`;
+
+    // Actualizar la cita con la nueva fecha y hora
+    const result = await query(
+      'UPDATE citas SET dia = $1, horario = $2, fecha_agendada = NOW() WHERE id = $3 RETURNING *',
+      [nuevo_dia, nuevo_horario, id]
+    );
+
+    const citaReprogramada = result.rows[0];
+
+    // Crear notificaciones para ambos usuarios
+    
+    // Notificación para el paciente
+    const mensajePaciente = `📅 Su cita ha sido reprogramada exitosamente.
+Fecha anterior: ${fechaAnterior}
+Nueva fecha: ${fechaNueva}
+Doctor: Dr. ${citaActual.doctor_name} ${citaActual.doctor_apellido}
+Especialidad: ${citaActual.especialidad}
+${motivo ? `Motivo: ${motivo}` : ''}
+¡No olvide asistir puntualmente a su nueva cita!`;
+
+    await query(
+      'INSERT INTO notificaciones (mensaje, destinatario_id) VALUES ($1, $2)',
+      [mensajePaciente, citaActual.paciente_id]
+    );
+
+    // Notificación para el doctor
+    const mensajeDoctor = `📅 Cita reprogramada en su agenda.
+Paciente: ${citaActual.paciente_name} ${citaActual.paciente_apellido}
+Fecha anterior: ${fechaAnterior}
+Nueva fecha: ${fechaNueva}
+Especialidad: ${citaActual.especialidad}
+${motivo ? `Motivo: ${motivo}` : ''}`;
+
+    await query(
+      'INSERT INTO notificaciones (mensaje, destinatario_id) VALUES ($1, $2)',
+      [mensajeDoctor, citaActual.doctor_id]
+    );
+
+    res.status(200).json({ 
+      message: 'Cita reprogramada exitosamente y notificaciones enviadas',
+      citaAnterior: {
+        dia: citaActual.dia,
+        horario: citaActual.horario
+      },
+      citaNueva: citaReprogramada
+    });
+  } catch (error) {
+    console.error('Error al reprogramar cita:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
 // Función para enviar recordatorios de citas (24 horas antes)
 const enviarRecordatoriosCitas = async () => {
   try {
@@ -241,5 +329,6 @@ module.exports = {
   obtenerCitasPorDoctor,
   obtenerTodasLasCitas,
   cancelarCita,
+  reprogramarCita,
   enviarRecordatoriosCitas
 };

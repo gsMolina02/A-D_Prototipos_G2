@@ -53,6 +53,10 @@ export const cancelarCita = async (id, motivo) => {
   return await axios.put(`${apiUrl}/citas/${id}/cancelar`, { motivo });
 };
 
+export const reprogramarCita = async (id, data) => {
+  return await axios.put(`${apiUrl}/citas/${id}/reprogramar`, data);
+};
+
 // Notificaciones
 export const crearNotificacion = async (data) => {
   return await axios.post(`${apiUrl}/notificaciones`, data);

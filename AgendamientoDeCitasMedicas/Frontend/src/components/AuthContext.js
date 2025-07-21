@@ -5,6 +5,7 @@ import {
   obtenerCitasPorDoctor,
   obtenerTodasLasCitas,
   cancelarCita as cancelarCitaAPI,
+  reprogramarCita as reprogramarCitaAPI,
   crearHorario,
   obtenerHorariosPorDoctor,
   obtenerTodosLosHorarios,
@@ -220,6 +221,20 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const reprogramarCita = async (citaId, datosReprogramacion) => {
+    try {
+      await reprogramarCitaAPI(citaId, datosReprogramacion);
+      
+      // Cargar notificaciones actualizadas después de reprogramar
+      await cargarNotificaciones();
+      
+      return { success: true, message: 'Cita reprogramada exitosamente' };
+    } catch (error) {
+      console.error('Error al reprogramar cita:', error);
+      return { success: false, message: error.response?.data?.error || 'Error al reprogramar cita' };
+    }
+  };
+
   // --- Funciones de notificaciones ---
   const cargarNotificaciones = async () => {
     if (!usuarioActual) return;
@@ -279,6 +294,7 @@ export const AuthProvider = ({ children }) => {
       obtenerCitasPaciente,
       obtenerCitasDoctor,
       cancelarCita,
+      reprogramarCita,
       notificaciones,
       notificacionNoLeida,
       cargarNotificaciones,
