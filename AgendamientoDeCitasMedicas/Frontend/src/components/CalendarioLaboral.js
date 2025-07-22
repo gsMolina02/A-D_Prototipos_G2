@@ -330,7 +330,7 @@ const generarReporte = async (e) => {
     });
     
     if (resultado.success) {
-      alert('✅ ' + resultado.message);
+      alert(resultado.message);
       // Recargar tanto horarios como citas para actualizar disponibilidad
       await cargarTodasLasCitas();
       if (usuarioActual.rol === 'paciente') {
@@ -338,24 +338,24 @@ const generarReporte = async (e) => {
         setHorariosBackend(horarios);
       }
     } else {
-      alert('❌ ' + resultado.message);
+      alert(resultado.message);
     }
   };
 
   return (
     <div className="calendario-container">
       <div className="calendario-box">
-        <h2 className="calendario-titulo">📅 Calendario Laboral</h2>
+        <h2 className="calendario-titulo">Calendario Laboral</h2>
       
      {!puedeEditar && (
         <div className="mensaje-permisos">
-          <h4>👤 Modo solo lectura</h4>
+          <h4>Modo solo lectura</h4>
           <p>Solo puedes visualizar horarios disponibles. Doctores y administradores pueden gestionarlos.</p>
         </div>
       )}
       {puedeEditar && (
         <form className="agregar-horario-box" onSubmit={agregarHorario}>
-            <h3>➕ Agregar Nuevo Horario</h3>
+            <h3>Agregar Nuevo Horario</h3>
             <div className="horario-form">
               <div>
                 <label>Día:</label>
@@ -385,10 +385,10 @@ const generarReporte = async (e) => {
             <div className="botones-acciones">
               <button className="btn-verde" type="submit">Agregar Horario</button>
               {horarios.length > 0 && (
-                <button className="btn-rojo" type="button" onClick={limpiarTodosLosHorarios}>🗑️ Limpiar Todo</button>
+                <button className="btn-rojo" type="button" onClick={limpiarTodosLosHorarios}>Limpiar Todo</button>
               )}
             </div>
-            {error && <div className="error-mensaje">⚠️ {error}</div>}
+            {error && <div className="error-mensaje">{error}</div>}
           </form>
         )}
 
@@ -399,7 +399,7 @@ const generarReporte = async (e) => {
               <div key={dia} className="bloque-horario">
                 <h3>{dia}</h3>
                 {horariosDelDia.length === 0 ? (
-                  <p className="sin-horarios">😴 Sin horarios configurados</p>
+                  <p className="sin-horarios">Sin horarios configurados</p>
                 ) : (
                   horariosDelDia.map(horario => (
                     <div key={horario.id} className="card-horario">
@@ -408,32 +408,32 @@ const generarReporte = async (e) => {
                       )}
                       <div>
                         {horario.doctor_name && (
-                          <p><strong>👨‍⚕️ Doctor:</strong> {horario.doctor_name} {horario.doctor_apellido}</p>
+                          <p><strong>Doctor:</strong> {horario.doctor_name} {horario.doctor_apellido}</p>
                         )}
-                        <p><strong>🕐 Horario:</strong> {(horario.hora_inicio || horario.horaInicio).substring(0, 5)} - {(horario.hora_fin || horario.horaFin).substring(0, 5)}</p>
-                        <p><strong>⏱️ Duración:</strong> {horario.duracion_cita || horario.duracionCita} min</p>
-                        <p><strong>⏸️ Intervalo:</strong> {horario.intervalo} min</p>
-                        <p><strong>📊 Citas posibles:</strong> {calcularCitasPosibles(horario)}</p>
+                        <p><strong>Horario:</strong> {(horario.hora_inicio || horario.horaInicio).substring(0, 5)} - {(horario.hora_fin || horario.horaFin).substring(0, 5)}</p>
+                        <p><strong>Duración:</strong> {horario.duracion_cita || horario.duracionCita} min</p>
+                        <p><strong>Intervalo:</strong> {horario.intervalo} min</p>
+                        <p><strong>Citas posibles:</strong> {calcularCitasPosibles(horario)}</p>
                       </div>
                       <details>
-                        <summary>👁️ Ver horarios de citas disponibles</summary>
+                        <summary>Ver horarios de citas disponibles</summary>
                         <div className="details-citas">
                           {generarHorariosCitas(horario).map((cita, idx) => {
   const ocupado = estaOcupado(dia, cita, horario.doctor_id);
   return (
     <div key={idx} className={`cita-item ${ocupado ? 'ocupado' : 'disponible'}`}>
-      <span>🕒 {cita}</span>
+      <span>{cita}</span>
       {usuarioActual?.rol === 'paciente' && (
         <button
           className={`btn-agendar ${ocupado ? 'btn-ocupado' : ''}`}
           onClick={() => handleAgendarCita(horario, cita)}
           disabled={ocupado}
         >
-          {ocupado ? '❌ No disponible' : '✅ Agendar'} 
+          {ocupado ? 'No disponible' : 'Agendar'} 
         </button>
       )}
       {ocupado && (
-        <span className="estado-ocupado">🔴 Ocupado</span>
+        <span className="estado-ocupado">Ocupado</span>
       )}
     </div>
   );
