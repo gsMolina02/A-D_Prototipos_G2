@@ -71,7 +71,7 @@ const ListaCitas = () => {
   const handleReprogramar = async (citaId) => {
     // VALIDACIÓN EN FRONTEND - Campos requeridos
     if (!formReprogramar.nuevo_dia || !formReprogramar.nuevo_horario) {
-      alert('❌ Error: Por favor, complete todos los campos requeridos (fecha y horario)');
+      alert('Error: Por favor, complete todos los campos requeridos (fecha y horario)');
       return;
     }
 
@@ -80,7 +80,7 @@ const ListaCitas = () => {
     const fechaSeleccionada = new Date(`${formReprogramar.nuevo_dia}T${formReprogramar.nuevo_horario}`);
     
     if (fechaSeleccionada <= fechaActual) {
-      alert('❌ Error: No se puede reprogramar para una fecha y hora pasada');
+      alert('Error: No se puede reprogramar para una fecha y hora pasada');
       return;
     }
 
@@ -89,7 +89,7 @@ const ListaCitas = () => {
     fechaLimite.setMonth(fechaLimite.getMonth() + 3);
     
     if (fechaSeleccionada > fechaLimite) {
-      alert('❌ Error: La fecha seleccionada es muy lejana. Máximo 3 meses en el futuro');
+      alert('Error: La fecha seleccionada es muy lejana. Máximo 3 meses en el futuro');
       return;
     }
 
@@ -99,15 +99,15 @@ const ListaCitas = () => {
     const fechaNueva = `${formReprogramar.nuevo_dia} ${formReprogramar.nuevo_horario}`;
     
     const confirmacion = window.confirm(`
-🔄 CONFIRMACIÓN DE REPROGRAMACIÓN
+CONFIRMACIÓN DE REPROGRAMACIÓN
 
 ¿Está seguro de reprogramar la cita?
 
-📅 Fecha anterior: ${fechaAnterior}
-📅 Fecha nueva: ${fechaNueva}
-👨‍⚕️ Doctor: ${cita.doctor_name || 'Dr. ' + cita.doctor_apellido}
-🏥 Especialidad: ${cita.especialidad || 'Consulta General'}
-${formReprogramar.motivo ? `📝 Motivo: ${formReprogramar.motivo}` : ''}
+Fecha anterior: ${fechaAnterior}
+Fecha nueva: ${fechaNueva}
+Doctor: ${cita.doctor_name || 'Dr. ' + cita.doctor_apellido}
+Especialidad: ${cita.especialidad || 'Consulta General'}
+${formReprogramar.motivo ? `Motivo: ${formReprogramar.motivo}` : ''}
 
 Esta acción no se puede deshacer.
     `);
@@ -126,10 +126,10 @@ Esta acción no se puede deshacer.
       setCitas(citasData);
       setMostrarFormularioReprogramar(null);
       setFormReprogramar({ nuevo_dia: '', nuevo_horario: '', motivo: '' });
-      alert('✅ Cita reprogramada exitosamente');
+      alert('Cita reprogramada exitosamente');
     } else {
       // Mostrar error específico del backend
-      alert(`❌ Error al reprogramar: ${result.message}`);
+      alert(`Error al reprogramar: ${result.message}`);
     }
   };
 
@@ -239,9 +239,9 @@ Esta acción no se puede deshacer.
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
-                <strong>📅 Día:</strong> {cita.dia} <br />
-                <strong>🕒 Horario:</strong> {cita.horario} <br />
-                <strong>📊 Estado:</strong> 
+                <strong>Día:</strong> {cita.dia} <br />
+                <strong>Horario:</strong> {cita.horario} <br />
+                <strong>Estado:</strong> 
                 <span style={{ 
                   color: cita.estado === 'cancelada' ? 'red' : cita.estado === 'pendiente' ? 'orange' : 'green',
                   fontWeight: 'bold',
@@ -255,14 +255,14 @@ Esta acción no se puede deshacer.
                 <br />
                 {usuarioActual.rol === 'paciente' ? (
                   <>
-                    <strong>👨‍⚕️ Doctor:</strong> {cita.doctor_name} {cita.doctor_apellido} <br />
+                    <strong>Doctor:</strong> {cita.doctor_name} {cita.doctor_apellido} <br />
                   </>
                 ) : (
                   <>
                     <strong>🧑‍🤝‍🧑 Paciente:</strong> {cita.paciente_name} {cita.paciente_apellido} <br />
                   </>
                 )}
-                <strong>🏥 Especialidad:</strong> {cita.especialidad || 'Consulta General'} <br />
+                <strong>Especialidad:</strong> {cita.especialidad || 'Consulta General'} <br />
               </div>
               
               {/* Indicador visual del estado de reprogramación */}
@@ -275,7 +275,7 @@ Esta acción no se puede deshacer.
                 color: estadoReprogramacion.puede ? '#155724' : '#856404',
                 border: `1px solid ${estadoReprogramacion.puede ? '#c3e6cb' : '#ffeaa7'}`
               }}>
-                {estadoReprogramacion.puede ? '✅ Reprogramable' : `❌ ${estadoReprogramacion.razon}`}
+                {estadoReprogramacion.puede ? 'Reprogramable' : `${estadoReprogramacion.razon}`}
               </div>
             </div>
             
@@ -293,7 +293,7 @@ Esta acción no se puede deshacer.
                     cursor: 'pointer'
                   }}
                 >
-                  🔄 Reprogramar
+                  Reprogramar
                 </button>
                 {usuarioActual.rol === 'doctor' && (
                   <button 
@@ -307,7 +307,7 @@ Esta acción no se puede deshacer.
                       cursor: 'pointer'
                     }}
                   >
-                    ❌ Cancelar cita
+                    Cancelar cita
                   </button>
                 )}
               </div>
@@ -321,7 +321,7 @@ Esta acción no se puede deshacer.
                 border: '1px solid #dee2e6', 
                 borderRadius: '5px' 
               }}>
-                <h4>🔄 Reprogramar Cita</h4>
+                <h4>Reprogramar Cita</h4>
                 <div style={{ marginBottom: '10px' }}>
                   <label htmlFor="nuevo_dia">Nueva Fecha:</label>
                   <input
@@ -376,7 +376,7 @@ Esta acción no se puede deshacer.
                   </select>
                   {formReprogramar.nuevo_dia && horariosDisponibles.length === 0 && (
                     <small style={{ marginLeft: '10px', color: 'red' }}>
-                      ⚠️ No hay horarios disponibles para este día
+                      No hay horarios disponibles para este día
                     </small>
                   )}
                   {horarioSeleccionado && (
@@ -419,7 +419,7 @@ Esta acción no se puede deshacer.
                       cursor: 'pointer'
                     }}
                   >
-                    ✅ Confirmar
+                    Confirmar
                   </button>
                   <button 
                     onClick={cerrarFormularioReprogramar}
@@ -432,7 +432,7 @@ Esta acción no se puede deshacer.
                       cursor: 'pointer'
                     }}
                   >
-                    ❌ Cancelar
+                    Cancelar
                   </button>
                 </div>
               </div>
