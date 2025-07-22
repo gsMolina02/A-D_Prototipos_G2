@@ -26,7 +26,7 @@ app.use('/api', userRoutes);
 app.use('/api/horarios', horarioRoutes);
 app.use('/api/citas', citaRoutes);
 app.use('/api/notificaciones', notificacionRoutes);
-app.use('/api/citas', citasRoutes);
+app.use('/api/citasreportes', citasRoutes);
 
 // Agregar ruta base para verificar que el backend está funcionando
 app.get('/', (req, res) => {

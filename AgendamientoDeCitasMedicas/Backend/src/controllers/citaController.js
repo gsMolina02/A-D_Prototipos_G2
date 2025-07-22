@@ -266,6 +266,24 @@ ${motivo ? `Motivo: ${motivo}` : ''}`;
   }
 };
 
+// Marcar cita como atendida
+const marcarComoAtendida = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const resultAtendida = await query(
+      'UPDATE citas SET estado = $1 WHERE id = $2 RETURNING *',
+      ['atendida', id]
+    );
+    if (resultAtendida.rows.length === 0) {
+      return res.status(404).json({ error: 'Cita no encontrada' });
+    }
+    res.status(200).json({ message: 'Cita marcada como atendida', cita: resultAtendida.rows[0] });
+  } catch (error) {
+    console.error('Error al marcar cita como atendida:', error);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
 // Función para enviar recordatorios de citas (24 horas antes)
 const enviarRecordatoriosCitas = async () => {
   try {
@@ -330,5 +348,6 @@ module.exports = {
   obtenerTodasLasCitas,
   cancelarCita,
   reprogramarCita,
+  marcarComoAtendida,
   enviarRecordatoriosCitas
 };

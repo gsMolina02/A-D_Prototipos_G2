@@ -41,7 +41,7 @@ const ReporteCitas = () => {
     setTotales(null);
     try {
       const { fechaInicio, fechaFin, campos } = filtroReporte;
-      const res = await axios.post('http://localhost:5000/api/citas/reporte', {
+      const res = await axios.post('http://localhost:5000/api/citasreportes/reporte', {
         fechaInicio,
         fechaFin,
         campos
@@ -57,22 +57,23 @@ const ReporteCitas = () => {
   };
 
   const data = {
-    labels: ['Citas Agendadas', 'Citas Canceladas'],
+    labels: ['Citas Agendadas', 'Citas Canceladas', 'Citas Atendidas'],
     datasets: [
       {
         label: 'Totales',
-        data: totales ? [totales.total_agendadas, totales.total_canceladas] : [0, 0],
-        backgroundColor: ['#4caf50', '#f44336']
+        data: totales ? [totales.total_agendadas, totales.total_canceladas, totales.total_atendidas] : [0, 0, 0],
+        backgroundColor: ['#4caf50', '#f44336', '#2196f3']
       }
     ]
   };
 
   const calcularPorcentajes = () => {
-    if (!totales) return { agendadas: 0, canceladas: 0 };
-    const total = totales.total_agendadas + totales.total_canceladas;
-    const agendadas = ((totales.total_agendadas / total) * 100).toFixed(2);
-    const canceladas = ((totales.total_canceladas / total) * 100).toFixed(2);
-    return { agendadas, canceladas };
+    if (!totales) return { agendadas: 0, canceladas: 0, atendidas: 0 };
+    const total = totales.total_agendadas + totales.total_canceladas + totales.total_atendidas;
+    const agendadas = total ? ((totales.total_agendadas / total) * 100).toFixed(2) : 0;
+    const canceladas = total ? ((totales.total_canceladas / total) * 100).toFixed(2) : 0;
+    const atendidas = total ? ((totales.total_atendidas / total) * 100).toFixed(2) : 0;
+    return { agendadas, canceladas, atendidas };
   };
 
   const porcentajes = calcularPorcentajes();
@@ -141,7 +142,7 @@ const ReporteCitas = () => {
         <div style={{ marginTop: '2rem' }}>
           <Bar data={data} />
           <p style={{ marginTop: '1rem', fontWeight: 'bold'}}>
-            Citas agendadas: {porcentajes.agendadas}% | Citas canceladas: {porcentajes.canceladas}%
+            Citas agendadas: {porcentajes.agendadas}% | Citas canceladas: {porcentajes.canceladas}% | Citas atendidas: {porcentajes.atendidas}%
           </p>
         </div>
       )}

@@ -15,7 +15,7 @@ const ListaCitas = () => {
   useEffect(() => {
     const cargarCitas = async () => {
       if (!usuarioActual) return;
-      
+
       setLoading(true);
       try {
         let citasData = [];
@@ -50,7 +50,7 @@ const ListaCitas = () => {
   const handleCancelar = async (citaId) => {
     const motivo = prompt('Ingrese el motivo de la cancelación:');
     if (!motivo) return;
-    
+
     const result = await cancelarCita(citaId, motivo);
     if (result.success) {
       // Recargar citas
@@ -108,6 +108,37 @@ const ListaCitas = () => {
     }));
   };
 
+  // Nueva función para marcar como atendida
+  const handleMarcarComoAtendida = async (citaId) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/citasreportes/${citaId}/atendida`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ estado: 'atendida' })
+      });
+
+      if (!response.ok) {
+        throw new Error('No se pudo marcar la cita como atendida');
+      }
+
+      // Recargar citas después de actualizar
+      let citasData = [];
+      if (usuarioActual.rol === 'paciente') {
+        citasData = await obtenerCitasPaciente(usuarioActual.id);
+      } else if (usuarioActual.rol === 'doctor') {
+        citasData = await obtenerCitasDoctor(usuarioActual.id);
+      }
+      setCitas(citasData);
+
+      alert('Cita marcada como atendida');
+    } catch (error) {
+      alert('Error al marcar la cita como atendida');
+      console.error(error);
+    }
+  };
+
   return (
     <div>
       <h3>Tus citas agendadas</h3>
@@ -131,48 +162,70 @@ const ListaCitas = () => {
               </>
             )}
             <strong>Especialidad:</strong> {cita.especialidad || 'Consulta General'} <br />
-            
+
             {cita.estado !== 'cancelada' && (
               <div style={{ marginTop: '10px' }}>
-                <button 
+                <button
                   onClick={() => abrirFormularioReprogramar(cita.id)}
-                  style={{ 
-                    marginRight: '10px', 
+                  style={{
+                    marginRight: '10px',
                     padding: '5px 10px',
                     backgroundColor: '#007bff',
                     color: 'white',
                     border: 'none',
                     borderRadius: '3px',
-                    cursor: 'pointer'
+                    cursor: cita.estado === 'atendida' ? 'not-allowed' : 'pointer',
+                    opacity: cita.estado === 'atendida' ? 0.5 : 1
                   }}
+                  disabled={cita.estado === 'atendida'}
                 >
                   Reprogramar
                 </button>
                 {usuarioActual.rol === 'doctor' && (
-                  <button 
-                    onClick={() => handleCancelar(cita.id)}
-                    style={{ 
-                      padding: '5px 10px',
-                      backgroundColor: '#dc3545',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '3px',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    Cancelar cita
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handleCancelar(cita.id)}
+                      style={{
+                        padding: '5px 10px',
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '3px',
+                        cursor: cita.estado === 'atendida' ? 'not-allowed' : 'pointer',
+                        opacity: cita.estado === 'atendida' ? 0.5 : 1
+                      }}
+                      disabled={cita.estado === 'atendida'}
+                    >
+                      Cancelar cita
+                    </button>
+                    <button
+                      onClick={() => handleMarcarComoAtendida(cita.id)}
+                      style={{
+                        marginLeft: '10px',
+                        padding: '5px 10px',
+                        backgroundColor: '#4caf50',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '3px',
+                        cursor: cita.estado === 'atendida' ? 'not-allowed' : 'pointer',
+                        opacity: cita.estado === 'atendida' ? 0.5 : 1
+                      }}
+                      disabled={cita.estado === 'atendida'}
+                    >
+                      Marcar como atendida
+                    </button>
+                  </>
                 )}
               </div>
             )}
 
             {mostrarFormularioReprogramar === cita.id && (
-              <div style={{ 
-                marginTop: '15px', 
-                padding: '15px', 
-                backgroundColor: '#f8f9fa', 
-                border: '1px solid #dee2e6', 
-                borderRadius: '5px' 
+              <div style={{
+                marginTop: '15px',
+                padding: '15px',
+                backgroundColor: '#f8f9fa',
+                border: '1px solid #dee2e6',
+                borderRadius: '5px'
               }}>
                 <h4>Reprogramar Cita</h4>
                 <div style={{ marginBottom: '10px' }}>
@@ -183,8 +236,8 @@ const ListaCitas = () => {
                     name="nuevo_dia"
                     value={formReprogramar.nuevo_dia}
                     onChange={handleInputChange}
-                    style={{ 
-                      marginLeft: '10px', 
+                    style={{
+                      marginLeft: '10px',
                       padding: '5px',
                       border: '1px solid #ccc',
                       borderRadius: '3px',
@@ -200,8 +253,8 @@ const ListaCitas = () => {
                     name="nuevo_horario"
                     value={formReprogramar.nuevo_horario}
                     onChange={handleInputChange}
-                    style={{ 
-                      marginLeft: '10px', 
+                    style={{
+                      marginLeft: '10px',
                       padding: '5px',
                       border: '1px solid #ccc',
                       borderRadius: '3px',
@@ -227,8 +280,8 @@ const ListaCitas = () => {
                     value={formReprogramar.motivo}
                     onChange={handleInputChange}
                     placeholder="Ingrese el motivo de la reprogramación..."
-                    style={{ 
-                      marginLeft: '10px', 
+                    style={{
+                      marginLeft: '10px',
                       padding: '5px',
                       border: '1px solid #ccc',
                       borderRadius: '3px',
@@ -239,9 +292,9 @@ const ListaCitas = () => {
                   />
                 </div>
                 <div>
-                  <button 
+                  <button
                     onClick={() => handleReprogramar(cita.id)}
-                    style={{ 
+                    style={{
                       marginRight: '10px',
                       padding: '8px 15px',
                       backgroundColor: '#28a745',
@@ -253,9 +306,9 @@ const ListaCitas = () => {
                   >
                     Confirmar
                   </button>
-                  <button 
+                  <button
                     onClick={cerrarFormularioReprogramar}
-                    style={{ 
+                    style={{
                       padding: '8px 15px',
                       backgroundColor: '#6c757d',
                       color: 'white',
