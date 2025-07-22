@@ -76,12 +76,24 @@ const ReporteCitas = () => {
 
   const calcularPorcentajes = () => {
     if (!totales) return { agendadas: 0, canceladas: 0, atendidas: 0 };
-    const total = totales.total_agendadas + totales.total_canceladas + totales.total_atendidas;
+
+    // Asegurarse de que los valores sean números válidos
+    const totalAgendadas = parseInt(totales.total_agendadas) || 0;
+    const totalCanceladas = parseInt(totales.total_canceladas) || 0;
+    const totalAtendidas = parseInt(totales.total_atendidas) || 0;
+
+    const total = totalAgendadas + totalCanceladas + totalAtendidas;
     if (total === 0) return { agendadas: 0, canceladas: 0, atendidas: 0 };
-    const agendadas = ((totales.total_agendadas / total) * 100).toFixed(2);
-    const canceladas = ((totales.total_canceladas / total) * 100).toFixed(2);
-    const atendidas = ((totales.total_atendidas / total) * 100).toFixed(2);
-    return { agendadas: parseFloat(agendadas), canceladas: parseFloat(canceladas), atendidas: parseFloat(atendidas) };
+
+    const agendadas = ((totalAgendadas / total) * 100).toFixed(2);
+    const canceladas = ((totalCanceladas / total) * 100).toFixed(2);
+    const atendidas = ((totalAtendidas / total) * 100).toFixed(2);
+
+    return {
+      agendadas: parseFloat(agendadas),
+      canceladas: parseFloat(canceladas),
+      atendidas: parseFloat(atendidas),
+    };
   };
 
   const porcentajes = calcularPorcentajes();
@@ -101,7 +113,7 @@ const ReporteCitas = () => {
     // Devolver la fecha original si no está en formato yyyy-mm-dd
     return dateString;
   };
-
+  
   if (!usuarioActual || usuarioActual.rol !== 'doctor') {
     return <p>Solo los médicos pueden acceder a este reporte.</p>;
   }
