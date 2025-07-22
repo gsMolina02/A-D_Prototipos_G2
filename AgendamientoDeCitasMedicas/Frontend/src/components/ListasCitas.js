@@ -55,14 +55,10 @@ const ListaCitas = () => {
 
     const result = await cancelarCita(citaId, motivo);
     if (result.success) {
-      // Recargar citas
-      let citasData = [];
-      if (usuarioActual.rol === 'paciente') {
-        citasData = await obtenerCitasPaciente(usuarioActual.id);
-      } else if (usuarioActual.rol === 'doctor') {
-        citasData = await obtenerCitasDoctor(usuarioActual.id);
-      }
-      setCitas(citasData);
+      // Actualizar el estado de la cita como cancelada
+      setCitas(prevCitas => prevCitas.map(cita =>
+        cita.id === citaId ? { ...cita, estado: 'cancelada', motivo_cancelacion: motivo } : cita
+      ));
     } else {
       alert(result.message);
     }
@@ -128,14 +124,10 @@ const ListaCitas = () => {
       const data = await response.json();
       alert(data.message);
 
-      // Recargar citas después de marcar como atendida
-      let citasData = [];
-      if (usuarioActual.rol === 'paciente') {
-        citasData = await obtenerCitasPaciente(usuarioActual.id);
-      } else if (usuarioActual.rol === 'doctor') {
-        citasData = await obtenerCitasDoctor(usuarioActual.id);
-      }
-      setCitas(citasData);
+      // Actualizar el estado de la cita como atendida
+      setCitas(prevCitas => prevCitas.map(cita =>
+        cita.id === citaId ? { ...cita, estado: 'atendida' } : cita
+      ));
     } catch (error) {
       console.error('Error al marcar cita como atendida:', error);
       alert('Error al marcar cita como atendida.');
@@ -166,22 +158,28 @@ const ListaCitas = () => {
             )}
             <strong>Especialidad:</strong> {cita.especialidad || 'Consulta General'} <br />
 
-            {cita.estado !== 'cancelada' && (
+            {cita.estado === 'atendida' ? (
+              <p style={{ color: 'green', fontWeight: 'bold' }}>Cita atendida</p>
+            ) : cita.estado === 'cancelada' ? (
+              <p style={{ color: 'red', fontWeight: 'bold' }}>Cita cancelada (Motivo: {cita.motivo_cancelacion})</p>
+            ) : (
               <div style={{ marginTop: '10px' }}>
-                <button
-                  onClick={() => abrirFormularioReprogramar(cita.id)}
-                  style={{
-                    marginRight: '10px',
-                    padding: '5px 10px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '3px',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Reprogramar
-                </button>
+                {usuarioActual.rol === 'doctor' && (
+                  <button
+                    onClick={() => abrirFormularioReprogramar(cita.id)}
+                    style={{
+                      marginRight: '10px',
+                      padding: '5px 10px',
+                      backgroundColor: '#007bff',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '3px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Reprogramar
+                  </button>
+                )}
                 {usuarioActual.rol === 'doctor' && (
                   <>
                     <button
