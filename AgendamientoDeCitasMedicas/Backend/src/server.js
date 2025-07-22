@@ -21,6 +21,12 @@ app.use(express.json());
 // Usar Helmet para seguridad
 app.use(helmet());
 
+// Middleware para registrar todas las solicitudes entrantes
+app.use((req, res, next) => {
+  console.log(`Solicitud entrante: ${req.method} ${req.url}`);
+  next();
+});
+
 // Definir las rutas de la API, asegurándote de usar el prefijo "/api"
 app.use('/api', userRoutes);
 app.use('/api/horarios', horarioRoutes);

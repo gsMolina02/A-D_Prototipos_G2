@@ -37,9 +37,9 @@ router.put('/:id/atendida', async (req, res) => {
 
 // Ruta para reporte de citas
 router.post('/reporte', async (req, res) => {
-  const { doctorId, fechaInicio, fechaFin, campos } = req.body;
+  const { fechaInicio, fechaFin, campos } = req.body;
 
-  console.log('Datos recibidos:', { doctorId, fechaInicio, fechaFin, campos });
+  console.log('Datos recibidos:', { fechaInicio, fechaFin, campos });
 
   if (!fechaInicio || !fechaFin) {
     return res.status(400).json({ error: 'Faltan datos requeridos: fechaInicio y fechaFin.' });
@@ -62,8 +62,8 @@ router.post('/reporte', async (req, res) => {
       SELECT ${camposSelect}
       FROM citas
       JOIN users ON citas.paciente_id = users.id
-      WHERE users.rol = 'paciente' AND citas.doctor_id = $3 AND citas.dia BETWEEN $1 AND $2
-      ORDER BY citas.dia, citas.horario
+      WHERE users.rol = 'paciente' AND citas.fecha_agendada BETWEEN $1 AND $2
+      ORDER BY citas.fecha_agendada, citas.horario
     `;
 
     const queryTotales = `
@@ -72,14 +72,16 @@ router.post('/reporte', async (req, res) => {
         COUNT(CASE WHEN estado = 'cancelada' THEN 1 END) AS total_canceladas,
         COUNT(CASE WHEN estado = 'atendida' THEN 1 END) AS total_atendidas
       FROM citas
-      WHERE doctor_id = $3 AND dia BETWEEN $1 AND $2
+      WHERE fecha_agendada BETWEEN $1 AND $2
     `;
 
     console.log('Consulta SQL para citas:', queryCitas);
     console.log('Consulta SQL para totales:', queryTotales);
 
-    const citasResult = await db.query(queryCitas, [fechaInicio, fechaFin, doctorId]);
+    const citasResult = await db.query(queryCitas, [fechaInicio, fechaFin]);
     const totalesResult = await db.query(queryTotales, [fechaInicio, fechaFin]);
+
+    console.log('Resultados de citas obtenidos:', citasResult.rows.length); // Log agregado
 
     res.json({
       citas: citasResult.rows,

@@ -39,21 +39,28 @@ const ReporteCitas = () => {
     setLoadingReporte(true);
     setReporte([]);
     setTotales(null);
+    console.log('Método generarReporte ejecutado');
     try {
       const { fechaInicio, fechaFin, campos } = filtroReporte;
+      console.log('URL utilizada para la solicitud:', 'http://localhost:5000/api/citasreportes/reporte');
+      console.log('Usuario actual:', usuarioActual);
       const res = await axios.post('http://localhost:5000/api/citasreportes/reporte', {
         fechaInicio,
         fechaFin,
         campos
       });
+      console.log('Datos enviados al backend:', { fechaInicio, fechaFin, campos });
+      console.log('Respuesta recibida del backend:', res.data);
       setReporte(res.data.citas);
       setTotales(res.data.totales);
+      console.log('Citas obtenidas en el reporte:', res.data.citas);
     } catch (err) {
       console.error(err);
       alert('Error al generar el reporte.');
     } finally {
       setLoadingReporte(false);
     }
+    console.log('Estado del reporte después de la solicitud:', reporte);
   };
 
   const data = {
@@ -70,13 +77,30 @@ const ReporteCitas = () => {
   const calcularPorcentajes = () => {
     if (!totales) return { agendadas: 0, canceladas: 0, atendidas: 0 };
     const total = totales.total_agendadas + totales.total_canceladas + totales.total_atendidas;
-    const agendadas = total ? ((totales.total_agendadas / total) * 100).toFixed(2) : 0;
-    const canceladas = total ? ((totales.total_canceladas / total) * 100).toFixed(2) : 0;
-    const atendidas = total ? ((totales.total_atendidas / total) * 100).toFixed(2) : 0;
-    return { agendadas, canceladas, atendidas };
+    if (total === 0) return { agendadas: 0, canceladas: 0, atendidas: 0 };
+    const agendadas = ((totales.total_agendadas / total) * 100).toFixed(2);
+    const canceladas = ((totales.total_canceladas / total) * 100).toFixed(2);
+    const atendidas = ((totales.total_atendidas / total) * 100).toFixed(2);
+    return { agendadas: parseFloat(agendadas), canceladas: parseFloat(canceladas), atendidas: parseFloat(atendidas) };
   };
 
   const porcentajes = calcularPorcentajes();
+
+  const formatDay = (dateString) => {
+    if (!dateString) return 'Fecha no válida';
+
+    // Detectar formato yyyy-mm-dd
+    const regexISODate = /^\d{4}-\d{2}-\d{2}$/;
+    if (regexISODate.test(dateString)) {
+      const parsedDate = new Date(dateString);
+      if (isNaN(parsedDate)) return 'Fecha no válida';
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      return parsedDate.toLocaleDateString('es-ES', options);
+    }
+
+    // Devolver la fecha original si no está en formato yyyy-mm-dd
+    return dateString;
+  };
 
   if (!usuarioActual || usuarioActual.rol !== 'doctor') {
     return <p>Solo los médicos pueden acceder a este reporte.</p>;
@@ -130,7 +154,7 @@ const ReporteCitas = () => {
             {reporte.map((cita, idx) => (
               <tr key={idx}>
                 {filtroReporte.campos.paciente && <td style={{ border: '1px solid #ccc', padding: '0.5rem' }}>{cita.paciente_nombre}</td>}
-                {filtroReporte.campos.dia && <td style={{ border: '1px solid #ccc', padding: '0.5rem' }}>{cita.dia}</td>}
+                {filtroReporte.campos.dia && <td style={{ border: '1px solid #ccc', padding: '0.5rem' }}>{formatDay(cita.dia)}</td>}
                 {filtroReporte.campos.horario && <td style={{ border: '1px solid #ccc', padding: '0.5rem' }}>{cita.horario}</td>}
                 {filtroReporte.campos.estado && <td style={{ border: '1px solid #ccc', padding: '0.5rem' }}>{cita.estado}</td>}
               </tr>
