@@ -159,9 +159,9 @@ const ListaCitas = () => {
             <strong>Especialidad:</strong> {cita.especialidad || 'Consulta General'} <br />
 
             {cita.estado === 'atendida' ? (
-              <p style={{ color: 'green', fontWeight: 'bold' }}>Cita atendida</p>
+              <p style={{ color: 'green', fontWeight: 'bold' }}>✅ Cita atendida</p>
             ) : cita.estado === 'cancelada' ? (
-              <p style={{ color: 'red', fontWeight: 'bold' }}>Cita cancelada (Motivo: {cita.motivo_cancelacion})</p>
+              <p style={{ color: 'red', fontWeight: 'bold' }}>❌ Cita cancelada (Motivo: {cita.motivo_cancelacion})</p>
             ) : (
               <div style={{ marginTop: '10px' }}>
                 {usuarioActual.rol === 'doctor' && (

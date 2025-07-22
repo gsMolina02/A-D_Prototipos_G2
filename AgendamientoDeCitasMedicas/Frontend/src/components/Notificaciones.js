@@ -56,7 +56,9 @@ const Notificaciones = () => {
           background: 'white',
           border: '1px solid #ccc',
           borderRadius: 6,
-          minWidth: 250,
+          minWidth: 300, // Aumenté el ancho mínimo
+          maxHeight: 400, // Aumenté la altura máxima
+          overflowY: 'auto',
           zIndex: 10,
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
         }}>
@@ -66,7 +68,7 @@ const Notificaciones = () => {
                 No tienes ninguna notificación
               </li>
             ) : (
-              misNotificaciones.slice(-5).reverse().map(n => (
+              misNotificaciones.sort((a, b) => b.leida - a.leida).map(n => (
                 <li key={n.id} style={{ padding: 8, borderBottom: '1px solid #eee', color: n.leida ? '#888' : '#222' }}>
                   {n.mensaje}
                 </li>
