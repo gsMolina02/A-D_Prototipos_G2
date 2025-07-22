@@ -1,7 +1,41 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db/db'); // Ajusta según tu conexión a la base de datos
+const db = require('../db/db'); // Usa 'db' aquí
 
+// Ruta para marcar una cita como atendida
+router.put('/:id/atendida', async (req, res) => {
+  const { id } = req.params;
+  console.log('Intentando actualizar cita:', id);
+  try {
+    // Verifica si la cita existe antes de actualizar
+    const citaExistente = await db.query('SELECT * FROM citas WHERE id = $1', [id]);
+    console.log('Cita encontrada:', citaExistente.rows);
+
+    if (citaExistente.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Cita no encontrada' });
+    }
+
+    // Realiza el update
+    const result = await db.query('UPDATE citas SET estado = $1 WHERE id = $2', ['atendida', id]);
+    console.log('Resultado de la actualización:', result);
+
+    if (result.rowCount === 0) {
+      return res.status(400).json({ success: false, message: 'No se actualizó ninguna cita. Verifica el ID.' });
+    }
+
+    res.json({ success: true, message: 'Cita marcada como atendida' });
+  } catch (error) {
+    console.error('Error al actualizar la cita:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error al actualizar la cita', 
+      error: error.message,
+      detalle: error // Esto te dará el detalle completo del error
+    });
+  }
+});
+
+// Ruta para reporte de citas
 router.post('/reporte', async (req, res) => {
   const { doctorId, fechaInicio, fechaFin, campos } = req.body;
 
@@ -18,7 +52,6 @@ router.post('/reporte', async (req, res) => {
     estado: 'citas.estado',
     especialidad: 'citas.especialidad'
   };
-
   const camposSelect = Object.keys(campos)
     .filter(key => campos[key])
     .map(key => camposMap[key])
@@ -29,23 +62,24 @@ router.post('/reporte', async (req, res) => {
       SELECT ${camposSelect}
       FROM citas
       JOIN users ON citas.paciente_id = users.id
-      WHERE users.rol = 'paciente' AND citas.dia BETWEEN $1 AND $2
+      WHERE users.rol = 'paciente' AND citas.doctor_id = $3 AND citas.dia BETWEEN $1 AND $2
       ORDER BY citas.dia, citas.horario
     `;
 
     const queryTotales = `
       SELECT 
         COUNT(CASE WHEN estado = 'pendiente' THEN 1 END) AS total_agendadas,
-        COUNT(CASE WHEN estado = 'cancelada' THEN 1 END) AS total_canceladas
+        COUNT(CASE WHEN estado = 'cancelada' THEN 1 END) AS total_canceladas,
+        COUNT(CASE WHEN estado = 'atendida' THEN 1 END) AS total_atendidas
       FROM citas
-      WHERE dia BETWEEN $1 AND $2
+      WHERE doctor_id = $3 AND dia BETWEEN $1 AND $2
     `;
 
     console.log('Consulta SQL para citas:', queryCitas);
     console.log('Consulta SQL para totales:', queryTotales);
 
-    const citasResult = await pool.query(queryCitas, [fechaInicio, fechaFin]);
-    const totalesResult = await pool.query(queryTotales, [fechaInicio, fechaFin]);
+    const citasResult = await db.query(queryCitas, [fechaInicio, fechaFin, doctorId]);
+    const totalesResult = await db.query(queryTotales, [fechaInicio, fechaFin]);
 
     res.json({
       citas: citasResult.rows,
@@ -57,4 +91,5 @@ router.post('/reporte', async (req, res) => {
     res.status(500).json({ error: 'Error al generar el reporte.', detalles: err.message });
   }
 });
+
 module.exports = router;
