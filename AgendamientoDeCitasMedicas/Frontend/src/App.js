@@ -3,10 +3,10 @@ import { AuthProvider, useAuth } from './components/AuthContext';
 import Login from './components/Login';
 import Register from './components/Register';
 import CalendarioLaboral from './components/CalendarioLaboral';
-import ListaCitas from './components/ListasCitas';  // <-- Importa el nuevo componente
+import ListaCitas from './components/ListasCitas';
 import './App.css';
 import Notificaciones from './components/Notificaciones';
-
+import ReporteCitas from './components/ReporteCitas'; // Importa el componente de reporte de citas
 
 // Componente Dashboard (mostrar cuando usuario está logueado)
 const Dashboard = () => {
@@ -17,8 +17,10 @@ const Dashboard = () => {
     switch (vistaActiva) {
       case 'calendario':
         return <CalendarioLaboral />;
-      case 'citas':  // <-- Nueva vista para mostrar citas
+      case 'citas':
         return <ListaCitas />;
+      case 'reporte':
+        return <ReporteCitas />;
       case 'perfil':
       default:
         return (
@@ -39,7 +41,6 @@ const Dashboard = () => {
       <div className="dashboard">
         <div className="dashboard-header">
           <h2>¡Bienvenido, {usuarioActual.name}!</h2>
-          
           <button 
             onClick={cerrarSesion}
             className="logout-button"
@@ -76,6 +77,15 @@ const Dashboard = () => {
             >
               Mis Citas
             </button>
+            {/* Botón solo visible para médicos */}
+            {usuarioActual.rol === 'doctor' && (
+              <button
+                className={`nav-button ${vistaActiva === 'reporte' ? 'active' : ''}`}
+                onClick={() => setVistaActiva('reporte')}
+              >
+                Reporte de Citas
+              </button>
+            )}
           </div>
           <div>
             <Notificaciones />

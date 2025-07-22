@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import './styles/CalendarioLaboral.css';
+import axios from 'axios'; // Asegúrate de tener axios instalado
 
 const CalendarioLaboral = () => {
   const {
@@ -30,6 +31,54 @@ const CalendarioLaboral = () => {
   const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
   const puedeEditar = usuarioActual && (usuarioActual.rol === 'doctor' || usuarioActual.rol === 'administrador');
+// Estado para el reporte
+const [reporte, setReporte] = useState([]);
+const [filtroReporte, setFiltroReporte] = useState({
+  fechaInicio: '',
+  fechaFin: '',
+  campos: {
+    paciente: true,
+    dia: true,
+    horario: true,
+    estado: true
+  }
+});
+const [loadingReporte, setLoadingReporte] = useState(false);
+
+// Manejar cambios en el formulario de reporte
+const handleFiltroReporteChange = (e) => {
+  const { name, value, type, checked } = e.target;
+  if (name in filtroReporte.campos) {
+    setFiltroReporte({
+      ...filtroReporte,
+      campos: { ...filtroReporte.campos, [name]: checked }
+    });
+  } else {
+    setFiltroReporte({ ...filtroReporte, [name]: value });
+  }
+};
+
+// Solicitar reporte al backend
+const generarReporte = async (e) => {
+  e.preventDefault();
+  setLoadingReporte(true);
+  setReporte([]);
+  try {
+    const { fechaInicio, fechaFin, campos } = filtroReporte;
+    const res = await axios.post('http://localhost:3001/api/citas/reporte', {
+      doctorId: usuarioActual.id,
+      fechaInicio,
+      fechaFin,
+      campos
+    });
+    setReporte(res.data);
+  } catch (err) {
+    setReporte([]);
+    alert('Error al generar reporte');
+  } finally {
+    setLoadingReporte(false);
+  }
+};
 
   // Cargar horarios al montar el componente
   useEffect(() => {
@@ -297,16 +346,15 @@ const CalendarioLaboral = () => {
     <div className="calendario-container">
       <div className="calendario-box">
         <h2 className="calendario-titulo">📅 Calendario Laboral</h2>
-
-        {!puedeEditar && (
-          <div className="mensaje-permisos">
-            <h4>👤 Modo solo lectura</h4>
-            <p>Solo puedes visualizar horarios disponibles. Doctores y administradores pueden gestionarlos.</p>
-          </div>
-        )}
-
-        {puedeEditar && (
-          <form className="agregar-horario-box" onSubmit={agregarHorario}>
+      
+     {!puedeEditar && (
+        <div className="mensaje-permisos">
+          <h4>👤 Modo solo lectura</h4>
+          <p>Solo puedes visualizar horarios disponibles. Doctores y administradores pueden gestionarlos.</p>
+        </div>
+      )}
+      {puedeEditar && (
+        <form className="agregar-horario-box" onSubmit={agregarHorario}>
             <h3>➕ Agregar Nuevo Horario</h3>
             <div className="horario-form">
               <div>

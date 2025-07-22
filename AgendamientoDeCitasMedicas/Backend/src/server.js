@@ -1,11 +1,12 @@
 const express = require('express');
-const cors = require('cors');
+const cors = require('cors'); // Solo una vez
 const dotenv = require('dotenv');
 const helmet = require('helmet');
 const userRoutes = require('./routes/userRoutes');
 const horarioRoutes = require('./routes/horarioRoutes');
 const citaRoutes = require('./routes/citaRoutes');
 const notificacionRoutes = require('./routes/notificacionRoutes');
+const citasRoutes = require('./routes/citas');
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use('/api', userRoutes);
 app.use('/api/horarios', horarioRoutes);
 app.use('/api/citas', citaRoutes);
 app.use('/api/notificaciones', notificacionRoutes);
+app.use('/api/citas', citasRoutes);
 
 // Agregar ruta base para verificar que el backend está funcionando
 app.get('/', (req, res) => {
