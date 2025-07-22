@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
 const ListaCitas = () => {
-  const { usuarioActual, obtenerCitasPaciente, obtenerCitasDoctor, cancelarCita, reprogramarCita, cargarTodosLosHorarios } = useAuth();
+  const { usuarioActual, obtenerCitasPaciente, obtenerCitasDoctor, cancelarCita, reprogramarCita, cargarTodosLosHorarios, todasLasCitas } = useAuth();
   const [citas, setCitas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [mostrarFormularioReprogramar, setMostrarFormularioReprogramar] = useState(null);
@@ -36,6 +36,15 @@ const ListaCitas = () => {
 
     cargarCitas();
   }, [usuarioActual]);
+
+  // useEffect para recargar horarios disponibles cuando cambien las citas globales
+  useEffect(() => {
+    // Si hay un formulario de reprogramación abierto y una fecha seleccionada,
+    // recargar los horarios disponibles para esa fecha
+    if (mostrarFormularioReprogramar && formReprogramar.nuevo_dia) {
+      cargarHorariosDisponibles(formReprogramar.nuevo_dia);
+    }
+  }, [todasLasCitas, mostrarFormularioReprogramar, formReprogramar.nuevo_dia]);
 
   if (!usuarioActual) {
     return <p>No hay usuario autenticado.</p>;
@@ -77,10 +86,13 @@ const ListaCitas = () => {
 
     // VALIDACIÓN EN FRONTEND - Fecha no puede ser en el pasado
     const fechaActual = new Date();
-    const fechaSeleccionada = new Date(`${formReprogramar.nuevo_dia}T${formReprogramar.nuevo_horario}`);
+    fechaActual.setHours(0, 0, 0, 0); // Resetear la hora para comparar solo fechas
     
-    if (fechaSeleccionada <= fechaActual) {
-      alert('Error: No se puede reprogramar para una fecha y hora pasada');
+    const [year, month, day] = formReprogramar.nuevo_dia.split('-');
+    const fechaSeleccionada = new Date(year, month - 1, day);
+    
+    if (fechaSeleccionada < fechaActual) {
+      alert('Error: No se puede reprogramar para una fecha pasada');
       return;
     }
 
@@ -93,10 +105,18 @@ const ListaCitas = () => {
       return;
     }
 
+    // Validar que sea día laborable (Lunes a Viernes)
+    const diaSemana = fechaSeleccionada.getDay();
+    if (diaSemana === 0 || diaSemana === 6) {
+      alert('Error: Solo se pueden agendar citas de lunes a viernes');
+      return;
+    }
+
     // VALIDACIÓN EN FRONTEND - Confirmación del usuario
     const cita = citas.find(c => c.id === citaId);
     const fechaAnterior = `${cita.dia} ${cita.horario}`;
-    const fechaNueva = `${formReprogramar.nuevo_dia} ${formReprogramar.nuevo_horario}`;
+    const nombreDiaNuevo = obtenerNombreDiaDesdeFormato(formReprogramar.nuevo_dia);
+    const fechaNueva = `${nombreDiaNuevo} ${formReprogramar.nuevo_horario}`;
     
     const confirmacion = window.confirm(`
 CONFIRMACIÓN DE REPROGRAMACIÓN
@@ -114,7 +134,15 @@ Esta acción no se puede deshacer.
 
     if (!confirmacion) return;
 
-    const result = await reprogramarCita(citaId, formReprogramar);
+    // Preparar datos para el backend
+    const datosReprogramacion = {
+      nuevo_dia: nombreDiaNuevo, // Enviar el nombre del día
+      nuevo_horario: formReprogramar.nuevo_horario,
+      motivo: formReprogramar.motivo,
+      fecha_especifica: formReprogramar.nuevo_dia // También enviar la fecha específica
+    };
+
+    const result = await reprogramarCita(citaId, datosReprogramacion);
     if (result.success) {
       // Recargar citas
       let citasData = [];
@@ -127,6 +155,8 @@ Esta acción no se puede deshacer.
       setMostrarFormularioReprogramar(null);
       setFormReprogramar({ nuevo_dia: '', nuevo_horario: '', motivo: '' });
       alert('Cita reprogramada exitosamente');
+      
+      // No necesitamos recargar toda la página, el AuthContext ya actualiza las citas
     } else {
       // Mostrar error específico del backend
       alert(`Error al reprogramar: ${result.message}`);
@@ -169,9 +199,17 @@ Esta acción no se puede deshacer.
       const horariosDelDia = todosLosHorarios.filter(h => h.dia === nombreDia);
       
       if (horariosDelDia.length > 0) {
-        setHorarioSeleccionado(horariosDelDia[0]);
-        const slots = generarSlotsDeHorario(horariosDelDia[0]);
-        setHorariosDisponibles(slots);
+        // Si hay múltiples horarios para el mismo día, seleccionar el primero
+        const horarioSeleccionado = horariosDelDia[0];
+        setHorarioSeleccionado(horarioSeleccionado);
+        const todosLosSlots = generarSlotsDeHorario(horarioSeleccionado);
+        
+        // Filtrar slots ocupados - solo mostrar disponibles
+        const slotsDisponibles = todosLosSlots.filter(slot => 
+          !estaHorarioOcupado(nombreDia, slot, horarioSeleccionado.doctor_id)
+        );
+        
+        setHorariosDisponibles(slotsDisponibles);
       } else {
         setHorariosDisponibles([]);
         setHorarioSeleccionado(null);
@@ -184,29 +222,55 @@ Esta acción no se puede deshacer.
 
   const obtenerNombreDiaDesdeFormato = (fecha) => {
     const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
-    const date = new Date(fecha);
+    // Crear fecha con zona horaria local para evitar problemas de zona horaria
+    const [year, month, day] = fecha.split('-');
+    const date = new Date(year, month - 1, day);
     return diasSemana[date.getDay()];
   };
 
   const generarSlotsDeHorario = (horario) => {
     const slots = [];
+    
+    if (!horario || !horario.hora_inicio || !horario.hora_fin) {
+      return [];
+    }
+    
     const horaInicio = horario.hora_inicio.substring(0, 5);
     const horaFin = horario.hora_fin.substring(0, 5);
-    const duracionCita = horario.duracion_cita || 30;
-    const intervalo = horario.intervalo || 0;
+    const duracionCita = parseInt(horario.duracion_cita) || 30;
+    const intervalo = parseInt(horario.intervalo) || 0;
 
     let horaActual = new Date(`1970-01-01T${horaInicio}:00`);
     const horaLimite = new Date(`1970-01-01T${horaFin}:00`);
 
     while (horaActual < horaLimite) {
       const horaSlot = horaActual.toTimeString().slice(0, 5);
-      slots.push(horaSlot);
       
-      // Agregar duración + intervalo
+      // Verificar que el slot completo (incluyendo duración) esté dentro del horario
+      const horaFinSlot = new Date(horaActual.getTime());
+      horaFinSlot.setMinutes(horaFinSlot.getMinutes() + duracionCita);
+      
+      if (horaFinSlot <= horaLimite) {
+        slots.push(horaSlot);
+      }
+      
+      // Agregar duración + intervalo para el próximo slot
       horaActual.setMinutes(horaActual.getMinutes() + duracionCita + intervalo);
     }
 
     return slots;
+  };
+
+  // Función para verificar si un horario específico está ocupado
+  const estaHorarioOcupado = (dia, horario, doctorId) => {
+    if (!todasLasCitas || todasLasCitas.length === 0) return false;
+    
+    return todasLasCitas.some(cita => {
+      return cita.doctor_id === doctorId &&
+             cita.dia === dia &&
+             cita.horario === horario &&
+             cita.estado !== 'cancelada';
+    });
   };
 
   // Función para validar si una cita puede ser reprogramada
@@ -346,8 +410,22 @@ Esta acción no se puede deshacer.
                     })()}
                   />
                   {formReprogramar.nuevo_dia && obtenerNombreDiaDesdeFormato(formReprogramar.nuevo_dia) && (
-                    <small style={{ marginLeft: '10px', color: '#666' }}>
+                    <small style={{ 
+                      marginLeft: '10px', 
+                      color: (() => {
+                        const [year, month, day] = formReprogramar.nuevo_dia.split('-');
+                        const fecha = new Date(year, month - 1, day);
+                        const diaSemana = fecha.getDay();
+                        return (diaSemana === 0 || diaSemana === 6) ? 'red' : '#666';
+                      })()
+                    }}>
                       {obtenerNombreDiaDesdeFormato(formReprogramar.nuevo_dia)}
+                      {(() => {
+                        const [year, month, day] = formReprogramar.nuevo_dia.split('-');
+                        const fecha = new Date(year, month - 1, day);
+                        const diaSemana = fecha.getDay();
+                        return (diaSemana === 0 || diaSemana === 6) ? ' ⚠️ Solo días laborables' : '';
+                      })()}
                     </small>
                   )}
                 </div>
@@ -374,16 +452,22 @@ Esta acción no se puede deshacer.
                       <option key={hora} value={hora}>{hora}</option>
                     ))}
                   </select>
-                  {formReprogramar.nuevo_dia && horariosDisponibles.length === 0 && (
+                  {formReprogramar.nuevo_dia && horariosDisponibles.length === 0 && horarioSeleccionado && (
                     <small style={{ marginLeft: '10px', color: 'red' }}>
-                      No hay horarios disponibles para este día
+                      Todos los horarios están ocupados para este día
                     </small>
                   )}
-                  {horarioSeleccionado && (
+                  {formReprogramar.nuevo_dia && !horarioSeleccionado && (
+                    <small style={{ marginLeft: '10px', color: 'red' }}>
+                      No hay horarios configurados para este día
+                    </small>
+                  )}
+                  {horarioSeleccionado && horariosDisponibles.length > 0 && (
                     <div style={{ marginLeft: '10px', marginTop: '5px', fontSize: '12px', color: '#666' }}>
                       <strong>Horario del doctor:</strong> {horarioSeleccionado.hora_inicio?.substring(0, 5)} - {horarioSeleccionado.hora_fin?.substring(0, 5)} 
                       | <strong>Duración:</strong> {horarioSeleccionado.duracion_cita} min
                       | <strong>Dr.</strong> {horarioSeleccionado.doctor_name} {horarioSeleccionado.doctor_apellido}
+                      | <strong>Disponibles:</strong> {horariosDisponibles.length} slots
                     </div>
                   )}
                 </div>
@@ -438,8 +522,7 @@ Esta acción no se puede deshacer.
               </div>
             )}
           </li>
-        );
-      })}
+        ))}
       </ul>
     </div>
   );
