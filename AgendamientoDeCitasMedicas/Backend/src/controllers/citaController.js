@@ -1,5 +1,17 @@
 const { query } = require('../db/db');
 
+// Funciones auxiliares
+const obtenerNombreDia = (fecha) => {
+  const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+  const date = new Date(fecha);
+  return diasSemana[date.getDay()];
+};
+
+const convertirHoraAMinutos = (hora) => {
+  const [horas, minutos] = hora.split(':').map(Number);
+  return horas * 60 + minutos;
+};
+
 // Crear cita
 const crearCita = async (req, res) => {
   const { paciente_id, doctor_id, dia, horario, especialidad } = req.body;
@@ -184,7 +196,7 @@ const reprogramarCita = async (req, res) => {
   const { nuevo_dia, nuevo_horario, motivo } = req.body;
 
   try {
-    // Primero obtener la información completa de la cita actual
+    // VALIDACIÓN 1: SELECCIÓN DE CITA - Verificar que la cita exista y sea válida
     const citaActualInfo = await query(`
       SELECT c.*, 
              p.name as paciente_name, p.apellido as paciente_apellido,
@@ -192,24 +204,98 @@ const reprogramarCita = async (req, res) => {
       FROM citas c
       JOIN users p ON c.paciente_id = p.id
       JOIN users d ON c.doctor_id = d.id
-      WHERE c.id = $1 AND c.estado != 'cancelada'
+      WHERE c.id = $1
     `, [id]);
 
     if (citaActualInfo.rows.length === 0) {
-      return res.status(404).json({ error: 'Cita no encontrada o ya está cancelada' });
+      return res.status(404).json({ error: 'Cita inexistente (ID de cita no válido o no encontrado)' });
     }
 
     const citaActual = citaActualInfo.rows[0];
 
-    // Verificar si ya existe una cita en el nuevo horario
+    // Validar que la cita no esté cancelada
+    if (citaActual.estado === 'cancelada') {
+      return res.status(400).json({ error: 'Cita cancelada (la cita ha sido marcada como cancelada)' });
+    }
+
+    // Validar que la cita no haya pasado
+    const fechaActual = new Date();
+    const fechaYHoraCita = new Date(`${citaActual.dia}T${citaActual.horario}`);
+    
+    if (fechaYHoraCita < fechaActual) {
+      return res.status(400).json({ error: 'Cita pasada (la fecha y hora de la cita ya han transcurrido)' });
+    }
+
+    // VALIDACIÓN 2: SELECCIÓN DE NUEVA FECHA
+    if (!nuevo_dia || !nuevo_horario) {
+      return res.status(400).json({ error: 'Fecha y hora requeridas (debe seleccionar nueva fecha y horario)' });
+    }
+
+    const nuevaFechaYHora = new Date(`${nuevo_dia}T${nuevo_horario}`);
+    
+    // Validar que la nueva fecha no esté en el pasado
+    if (nuevaFechaYHora < fechaActual) {
+      return res.status(400).json({ error: 'Fecha en el pasado (la nueva fecha seleccionada ya ha transcurrido)' });
+    }
+
+    // Validar que la fecha no sea muy lejana en el futuro (ej: máximo 3 meses)
+    const fechaLimite = new Date();
+    fechaLimite.setMonth(fechaLimite.getMonth() + 3);
+    
+    if (nuevaFechaYHora > fechaLimite) {
+      return res.status(400).json({ error: 'Fecha muy lejana en el futuro (excede el límite de agendamiento permitido)' });
+    }
+
+    // Verificar que el doctor tenga horarios disponibles para ese día
+    const horarioDoctor = await query(`
+      SELECT * FROM horarios 
+      WHERE doctor_id = $1 AND dia = $2
+    `, [citaActual.doctor_id, obtenerNombreDia(nuevo_dia)]);
+
+    if (horarioDoctor.rows.length === 0) {
+      return res.status(400).json({ error: 'Fecha y hora fuera del horario de atención del doctor' });
+    }
+
+    // Validar que el horario esté dentro del rango de atención
+    const horario = horarioDoctor.rows[0];
+    const horaInicio = horario.hora_inicio.substring(0, 5); // "09:00:00" -> "09:00"
+    const horaFin = horario.hora_fin.substring(0, 5);
+    const nuevaHora = nuevo_horario;
+
+    if (nuevaHora < horaInicio || nuevaHora >= horaFin) {
+      return res.status(400).json({ error: `Fecha y hora fuera del horario de atención del doctor (${horaInicio} - ${horaFin})` });
+    }
+
+    // Verificar que el slot de tiempo esté disponible (no ocupado)
     const citaExistente = await query(
       'SELECT * FROM citas WHERE doctor_id = $1 AND dia = $2 AND horario = $3 AND estado != $4 AND id != $5',
       [citaActual.doctor_id, nuevo_dia, nuevo_horario, 'cancelada', id]
     );
 
     if (citaExistente.rows.length > 0) {
-      return res.status(400).json({ error: 'Ya existe una cita en el nuevo horario seleccionado' });
+      return res.status(400).json({ error: 'Fecha y hora no disponible (el slot de tiempo ya está ocupado)' });
     }
+
+    // Validar que no sea el mismo slot original (usuario intenta reprogramar a la misma fecha/hora)
+    if (citaActual.dia === nuevo_dia && citaActual.horario === nuevo_horario) {
+      return res.status(400).json({ error: 'Cita en el mismo slot original (el usuario intenta reprogramar a la misma fecha/hora original)' });
+    }
+
+    // Validar que no sea un slot adyacente inmediato si está ocupado
+    const horaActualNum = convertirHoraAMinutos(citaActual.horario);
+    const nuevaHoraNum = convertirHoraAMinutos(nuevo_horario);
+    const duracionCita = horario.duracion_cita || 30; // Default 30 minutos
+
+    // Verificar slots adyacentes
+    if (citaActual.dia === nuevo_dia) {
+      const diferencia = Math.abs(nuevaHoraNum - horaActualNum);
+      if (diferencia < duracionCita) {
+        return res.status(400).json({ error: 'Reprogramación a un slot adyacente (nueva fecha/hora es inmediatamente anterior/posterior a slot ocupado)' });
+      }
+    }
+
+    // VALIDACIÓN 3: CONFIRMACIÓN DEL CAMBIO (esta se maneja en frontend)
+    // VALIDACIÓN 4: ACTUALIZACIÓN DE BASE DE DATOS Y CALENDARIO
 
     // Guardar información de la cita anterior para las notificaciones
     const fechaAnterior = `${citaActual.dia} ${citaActual.horario}`;
@@ -220,6 +306,10 @@ const reprogramarCita = async (req, res) => {
       'UPDATE citas SET dia = $1, horario = $2, fecha_agendada = NOW() WHERE id = $3 RETURNING *',
       [nuevo_dia, nuevo_horario, id]
     );
+
+    if (result.rows.length === 0) {
+      return res.status(500).json({ error: 'Fallo en la actualización (conflicto de concurrencia o violación de integridad)' });
+    }
 
     const citaReprogramada = result.rows[0];
 
