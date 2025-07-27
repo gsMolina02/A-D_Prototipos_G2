@@ -43,9 +43,8 @@ const ListaCitas = () => {
         citasData = await obtenerCitasDoctor(usuarioActual.id);
       }
       setCitas(citasData);
-      console.log('📋 Citas recargadas en ListasCitas:', citasData.length);
     } catch (error) {
-      console.error('Error al cargar citas:', error);
+      // Error silencioso
     } finally {
       setLoading(false);
     }
@@ -161,7 +160,6 @@ const ListaCitas = () => {
       return horariosDisponibles;
       
     } catch (error) {
-      console.error('Error al obtener horarios disponibles:', error);
       return [];
     }
   };
@@ -282,12 +280,6 @@ const ListaCitas = () => {
         motivo: formReprogramar.motivo || ''
       };
 
-      console.log('🔄 Reprogramando cita:', {
-        citaId: citaActualParaReprogramar.id,
-        desde: `${citaActualParaReprogramar.dia} ${citaActualParaReprogramar.horario}`,
-        hacia: `${datosReprogramacion.nuevo_dia} ${datosReprogramacion.nuevo_horario}`
-      });
-
       // Usar solo el ID de la cita (número) en lugar del objeto completo
       const resultado = await reprogramarCita(citaActualParaReprogramar.id, datosReprogramacion);
       
@@ -297,13 +289,10 @@ const ListaCitas = () => {
         
         // Recargar las citas para mostrar los cambios
         await cargarCitas();
-        
-        console.log('✅ Reprogramación completada exitosamente');
       } else {
         alert('Error al reprogramar la cita: ' + resultado.message);
       }
     } catch (error) {
-      console.error('Error al reprogramar cita:', error);
       alert('Error al reprogramar la cita: ' + (error.message || 'Error desconocido'));
     }
   };
@@ -344,7 +333,6 @@ const ListaCitas = () => {
         cita.id === citaId ? { ...cita, estado: 'atendida' } : cita
       ));
     } catch (error) {
-      console.error('Error al marcar cita como atendida:', error);
       alert('Error al marcar cita como atendida.');
     }
   };

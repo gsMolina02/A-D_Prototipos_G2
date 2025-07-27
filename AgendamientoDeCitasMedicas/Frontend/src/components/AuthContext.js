@@ -50,7 +50,6 @@ export const AuthProvider = ({ children }) => {
       
       return { success: false, message: response.data?.message || 'Error al registrar usuario' };
     } catch (error) {
-      console.error('Error en registrarUsuario:', error);
       const errorMessage = error.response?.data?.error || 'Error al registrar usuario';
       return { success: false, message: errorMessage };
     }
@@ -69,7 +68,6 @@ export const AuthProvider = ({ children }) => {
       
       return { success: false, message: response.data?.message || 'Credenciales inválidas' };
     } catch (error) {
-      console.error('Error en iniciarSesion:', error);
       const errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
       return { success: false, message: errorMessage };
     }
@@ -133,7 +131,6 @@ export const AuthProvider = ({ children }) => {
       const response = await obtenerHorariosPorDoctor(doctorId);
       return response.data;
     } catch (error) {
-      console.error('Error al cargar horarios:', error);
       return [];
     }
   };
@@ -143,7 +140,6 @@ export const AuthProvider = ({ children }) => {
       const response = await obtenerTodosLosHorarios();
       return response.data;
     } catch (error) {
-      console.error('Error al cargar horarios:', error);
       return [];
     }
   };
@@ -183,7 +179,6 @@ export const AuthProvider = ({ children }) => {
       const response = await obtenerCitasPorPaciente(pacienteId);
       return response.data;
     } catch (error) {
-      console.error('Error al obtener citas:', error);
       return [];
     }
   };
@@ -193,7 +188,6 @@ export const AuthProvider = ({ children }) => {
       const response = await obtenerCitasPorDoctor(doctorId);
       return response.data;
     } catch (error) {
-      console.error('Error al obtener citas:', error);
       return [];
     }
   };
@@ -203,30 +197,9 @@ export const AuthProvider = ({ children }) => {
       const response = await obtenerTodasLasCitas();
       setTodasLasCitas(response.data);
       
-      // DEBUG: Log temporal para investigar el problema
-      const citasReprogramadas = response.data.filter(cita => cita.estado === 'reprogramada');
-      console.log('🔍 DEBUG: ===== CITAS RECIBIDAS DEL BACKEND =====');
-      console.log('🔍 DEBUG: Total de citas:', response.data.length);
-      console.log('🔍 DEBUG: Citas reprogramadas:', citasReprogramadas.length);
-      
-      if (citasReprogramadas.length > 0) {
-        console.log('🔍 DEBUG: Detalles de citas reprogramadas:');
-        citasReprogramadas.forEach(cita => {
-          console.log(`   ID: ${cita.id}, Dia: ${cita.dia}, Horario: ${cita.horario}, Estado: ${cita.estado}, Doctor: ${cita.doctor_id}`);
-        });
-      }
-      
-      console.log('🔍 DEBUG: ===== TODAS LAS CITAS =====');
-      response.data.forEach(cita => {
-        console.log(`   ID: ${cita.id}, Dia: ${cita.dia}, Horario: ${cita.horario}, Estado: ${cita.estado}, Doctor: ${cita.doctor_id}`);
-      });
-      
-      if (!silencioso) {
-        console.log(`📋 Citas cargadas: ${response.data.length} total`);
-      }
+      setTodasLasCitas(response.data);
       return response.data;
     } catch (error) {
-      console.error('Error al cargar todas las citas:', error);
       return [];
     }
   }, []); // Sin dependencias ya que no depende de ningún estado
@@ -257,8 +230,6 @@ export const AuthProvider = ({ children }) => {
     try {
       await reprogramarCitaAPI(citaId, datosReprogramacion);
       
-      console.log('🔄 Cita reprogramada, actualizando calendario...');
-      
       // Actualizar el estado global de citas para reflejar los cambios en el calendario (silencioso)
       await cargarTodasLasCitas(true);
       notificarCambioEnCitas();
@@ -266,11 +237,8 @@ export const AuthProvider = ({ children }) => {
       // Cargar notificaciones actualizadas después de reprogramar
       await cargarNotificaciones();
       
-      console.log('✅ Calendario sincronizado');
-      
       return { success: true, message: 'Cita reprogramada exitosamente - Calendario actualizado' };
     } catch (error) {
-      console.error('❌ Error al reprogramar cita:', error);
       return { success: false, message: error.response?.data?.error || 'Error al reprogramar cita' };
     }
   };
@@ -287,7 +255,7 @@ export const AuthProvider = ({ children }) => {
       const hayNoLeidas = response.data.some(n => !n.leida);
       setNotificacionNoLeida(hayNoLeidas);
     } catch (error) {
-      console.error('Error al cargar notificaciones:', error);
+      // Error silencioso
     }
   };
 
@@ -304,12 +272,10 @@ export const AuthProvider = ({ children }) => {
   // Cargar todas las citas cuando se inicializa la aplicación o cambia el usuario
   useEffect(() => {
     const cargarDatosIniciales = async () => {
-      console.log('🚀 Inicializando aplicación...');
       try {
         await cargarTodasLasCitas();
-        console.log('✅ Aplicación inicializada correctamente');
       } catch (error) {
-        console.error('❌ Error al inicializar aplicación:', error);
+        // Error silencioso
       }
     };
 

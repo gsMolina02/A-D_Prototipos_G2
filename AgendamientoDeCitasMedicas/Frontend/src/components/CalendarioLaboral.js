@@ -32,19 +32,6 @@ const CalendarioLaboral = () => {
   const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
   const puedeEditar = usuarioActual && (usuarioActual.rol === 'doctor' || usuarioActual.rol === 'administrador');
-
-  // DEBUG: Log del estado del usuario y citas
-  console.log('🔍 DEBUG CalendarioLaboral - Estado actual:', {
-    usuarioActual: usuarioActual ? {
-      id: usuarioActual.id,
-      email: usuarioActual.email,
-      rol: usuarioActual.rol
-    } : null,
-    totalCitas: todasLasCitas.length,
-    citasReprogramadas: todasLasCitas.filter(c => c.estado === 'reprogramada').length,
-    horariosBackend: horariosBackend.length,
-    puedeEditar
-  });
 // Estado para el reporte
 const [reporte, setReporte] = useState([]);
 const [filtroReporte, setFiltroReporte] = useState({
@@ -116,7 +103,7 @@ const generarReporte = async (e) => {
         await cargarTodasLasCitas(true); // Silencioso en carga inicial
         
       } catch (error) {
-        console.error('Error al cargar horarios:', error);
+        // Error silencioso
       } finally {
         setLoading(false);
       }
@@ -162,16 +149,6 @@ const generarReporte = async (e) => {
     fechaObjetivo.setDate(hoy.getDate() + diferenciaDias);
     const fechaCalculada = fechaObjetivo.toISOString().split('T')[0];
     
-    // DEBUG: Log para verificar conversión de fechas
-    console.log('🔍 DEBUG convertirDiaAFecha:', {
-      nombreDia,
-      hoy: hoy.toISOString().split('T')[0],
-      diaActual: diasSemanaArray[diaActual],
-      indiceDiaObjetivo,
-      diferenciaDias,
-      fechaCalculada
-    });
-    
     return fechaCalculada;
   };
   
@@ -197,76 +174,16 @@ const generarReporte = async (e) => {
     const fechaStr = convertirDiaAFecha(nombreDia);
     if (!fechaStr) return false;
     
-    console.log('🔍 DEBUG esReprogramada - INICIO:', {
-      nombreDia,
-      horarioStr,
-      doctorId,
-      fechaStr,
-      totalCitas: todasLasCitas.length
-    });
-    
-    // DEBUG: Mostrar todas las citas para esta fecha
-    const citasEsteFecha = todasLasCitas.filter(cita => cita.dia === fechaStr);
-    console.log(`🔍 DEBUG: Citas en fecha ${fechaStr}:`, citasEsteFecha.length);
-    if (citasEsteFecha.length > 0) {
-      citasEsteFecha.forEach(cita => {
-        console.log(`   ID ${cita.id}: Dr${cita.doctor_id}, ${cita.horario}, Estado: ${cita.estado}`);
-      });
-    }
-    
     const cita = todasLasCitas.find(cita => {
       const coincideDoctor = String(cita.doctor_id) === String(doctorId);
       const coincideDia = cita.dia === fechaStr;
       const coincideHorario = cita.horario === horarioStr;
       const estadoValido = cita.estado !== 'cancelada';
       
-      // Solo mostrar debug para coincidencias potenciales
-      if (coincideDia && coincideDoctor) {
-        console.log('🔍 DEBUG comparando cita POTENCIAL:', {
-          citaId: cita.id,
-          citaDia: cita.dia,
-          citaHorario: cita.horario,
-          citaEstado: cita.estado,
-          citaDoctorId: cita.doctor_id,
-          buscandoHorario: horarioStr,
-          coincideDoctor,
-          coincideDia,
-          coincideHorario,
-          estadoValido,
-          esReprogramada: cita.estado === 'reprogramada'
-        });
-      }
-      
       return coincideDoctor && coincideDia && coincideHorario && estadoValido;
     });
     
-    const resultado = cita && cita.estado === 'reprogramada';
-    
-    // DEBUG: Log resultado final
-    if (resultado) {
-      console.log('🔍 DEBUG: ✅ CITA REPROGRAMADA ENCONTRADA:', {
-        id: cita.id,
-        dia: cita.dia,
-        horario: cita.horario,
-        estado: cita.estado,
-        fechaStr,
-        horarioStr
-      });
-    } else if (cita) {
-      console.log('🔍 DEBUG: ❌ Cita encontrada pero NO reprogramada:', {
-        id: cita.id,
-        estado: cita.estado
-      });
-    } else {
-      console.log('🔍 DEBUG: ❌ No se encontró cita para:', {
-        nombreDia,
-        fechaStr,
-        horarioStr,
-        doctorId
-      });
-    }
-    
-    return resultado;
+    return cita && cita.estado === 'reprogramada';
   };
 
   // Función para obtener información de una cita específica
@@ -483,21 +400,6 @@ const generarReporte = async (e) => {
       
       // Agregar intervalo para la siguiente cita
       actual.setMinutes(actual.getMinutes() + intervaloNum);
-    }
-    
-    // DEBUG: Log para verificar horarios generados
-    if (citas.length > 0) {
-      console.log('🔍 DEBUG generarHorariosCitas:', {
-        doctor_id: horario.doctor_id,
-        dia: horario.dia,
-        horaInicio,
-        horaFin,
-        duracionCita,
-        intervalo,
-        totalCitasGeneradas: citas.length,
-        primerasCitas: citas.slice(0, 3),
-        ultimasCitas: citas.slice(-3)
-      });
     }
     
     return citas;
