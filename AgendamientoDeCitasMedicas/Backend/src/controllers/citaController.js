@@ -172,9 +172,10 @@ const cancelarCita = async (req, res) => {
 // Obtener todas las citas
 const obtenerTodasLasCitas = async (req, res) => {
   try {
+    // La tabla users usa 'name' según el error de PostgreSQL
     const result = await query(`
       SELECT c.*, 
-             p.name as paciente_name, p.apellido as paciente_apellido,
+             p.name as paciente_name, p.apellido as paciente_apellido, p.cedula as paciente_cedula,
              d.name as doctor_name, d.apellido as doctor_apellido
       FROM citas c
       JOIN users p ON c.paciente_id = p.id
@@ -185,7 +186,7 @@ const obtenerTodasLasCitas = async (req, res) => {
 
     res.status(200).json(result.rows);
   } catch (error) {
-    console.error('Error al obtener todas las citas:', error);
+    console.error('❌ Error al obtener todas las citas:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
@@ -301,10 +302,10 @@ const reprogramarCita = async (req, res) => {
     const fechaAnterior = `${citaActual.dia} ${citaActual.horario}`;
     const fechaNueva = `${nuevo_dia} ${nuevo_horario}`;
 
-    // Actualizar la cita con la nueva fecha y hora
+    // Actualizar la cita con la nueva fecha, hora y marcar como reprogramada
     const result = await query(
-      'UPDATE citas SET dia = $1, horario = $2, fecha_agendada = NOW() WHERE id = $3 RETURNING *',
-      [nuevo_dia, nuevo_horario, id]
+      'UPDATE citas SET dia = $1, horario = $2, estado = $3, fecha_agendada = NOW() WHERE id = $4 RETURNING *',
+      [nuevo_dia, nuevo_horario, 'reprogramada', id]
     );
 
     if (result.rows.length === 0) {
@@ -312,6 +313,13 @@ const reprogramarCita = async (req, res) => {
     }
 
     const citaReprogramada = result.rows[0];
+
+    console.log('✅ Cita reprogramada exitosamente:', {
+      id: citaReprogramada.id,
+      nuevo_estado: citaReprogramada.estado,
+      nueva_fecha: citaReprogramada.dia,
+      nuevo_horario: citaReprogramada.horario
+    });
 
     // Crear notificaciones para ambos usuarios
     

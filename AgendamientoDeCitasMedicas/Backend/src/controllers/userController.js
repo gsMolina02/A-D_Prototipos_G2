@@ -154,11 +154,17 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ error: 'Este número de teléfono ya está registrado' });
     }
 
-    // Insertar usuario
+    // Insertar usuario - usar 'name' que es el campo correcto en la BD
     const result = await query(
       'INSERT INTO users (name, apellido, cedula, email, telefono, password, rol) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, apellido, cedula, email, telefono, rol',
       [name.trim(), apellido.trim(), cedula, email.trim(), telefono, password, rol]
     );
+
+    console.log('📋 Usuario registrado exitosamente:', {
+      id: result.rows[0].id,
+      nombre: result.rows[0].name,
+      cedula: result.rows[0].cedula
+    });
 
     return res.status(201).json({ 
       message: 'Usuario registrado exitosamente', 

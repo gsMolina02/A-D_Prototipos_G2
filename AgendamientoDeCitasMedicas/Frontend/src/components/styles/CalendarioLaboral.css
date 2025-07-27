@@ -278,3 +278,69 @@
   color: #dc3545;
   font-weight: bold;
 }
+
+/* Estilos para la información del paciente (solo para doctores) */
+.info-cita-ocupada {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.info-paciente {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.datos-paciente {
+  background-color: #f8f9fa;
+  padding: 8px;
+  border-radius: 4px;
+  border-left: 3px solid #007bff;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.datos-paciente p {
+  margin: 2px 0;
+  color: #495057;
+}
+
+.datos-paciente strong {
+  color: #007bff;
+  font-weight: 600;
+}
+
+.horario-cita {
+  font-weight: 500;
+  color: #333;
+}
+
+/* Estilos para citas reprogramadas */
+.cita-item.reprogramada {
+  background-color: #e3f2fd;
+  border: 2px solid #2196f3;
+  border-radius: 5px;
+  padding: 8px;
+  margin: 5px 0;
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
+}
+
+/* Estilos para diferentes estados de cita */
+.estado-cita {
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.estado-cita.ocupado {
+  color: #dc3545;
+  background-color: #f8d7da;
+}
+
+.estado-cita.reprogramada {
+  color: #2196f3;
+  background-color: #e3f2fd;
+}

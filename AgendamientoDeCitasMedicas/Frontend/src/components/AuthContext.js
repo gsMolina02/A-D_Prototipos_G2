@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { 
   crearCita, 
   obtenerCitasPorPaciente, 
@@ -31,6 +31,7 @@ export const AuthProvider = ({ children }) => {
   const [horariosPorDoctor, setHorariosPorDoctor] = useState({});
   const [notificaciones, setNotificaciones] = useState([]);
   const [notificacionNoLeida, setNotificacionNoLeida] = useState(false);
+  const [citasActualizadas, setCitasActualizadas] = useState(0); // Contador para forzar actualizaciones
 
   const cerrarSesion = () => {
     setUsuarioActual(null);
@@ -197,25 +198,56 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const cargarTodasLasCitas = async () => {
+  const cargarTodasLasCitas = useCallback(async (silencioso = false) => {
     try {
       const response = await obtenerTodasLasCitas();
       setTodasLasCitas(response.data);
+      
+      // DEBUG: Log temporal para investigar el problema
+      const citasReprogramadas = response.data.filter(cita => cita.estado === 'reprogramada');
+      console.log('🔍 DEBUG: ===== CITAS RECIBIDAS DEL BACKEND =====');
+      console.log('🔍 DEBUG: Total de citas:', response.data.length);
+      console.log('🔍 DEBUG: Citas reprogramadas:', citasReprogramadas.length);
+      
+      if (citasReprogramadas.length > 0) {
+        console.log('🔍 DEBUG: Detalles de citas reprogramadas:');
+        citasReprogramadas.forEach(cita => {
+          console.log(`   ID: ${cita.id}, Dia: ${cita.dia}, Horario: ${cita.horario}, Estado: ${cita.estado}, Doctor: ${cita.doctor_id}`);
+        });
+      }
+      
+      console.log('🔍 DEBUG: ===== TODAS LAS CITAS =====');
+      response.data.forEach(cita => {
+        console.log(`   ID: ${cita.id}, Dia: ${cita.dia}, Horario: ${cita.horario}, Estado: ${cita.estado}, Doctor: ${cita.doctor_id}`);
+      });
+      
+      if (!silencioso) {
+        console.log(`📋 Citas cargadas: ${response.data.length} total`);
+      }
       return response.data;
     } catch (error) {
       console.error('Error al cargar todas las citas:', error);
       return [];
     }
+  }, []); // Sin dependencias ya que no depende de ningún estado
+
+  // Función para notificar cambios en las citas
+  const notificarCambioEnCitas = () => {
+    setCitasActualizadas(prev => prev + 1);
   };
 
   const cancelarCita = async (citaId, motivo) => {
     try {
       await cancelarCitaAPI(citaId, motivo);
       
+      // Actualizar el estado global de citas para reflejar los cambios en el calendario (silencioso)
+      await cargarTodasLasCitas(true);
+      notificarCambioEnCitas();
+      
       // Cargar notificaciones actualizadas después de cancelar
       await cargarNotificaciones();
       
-      return { success: true, message: 'Cita cancelada exitosamente' };
+      return { success: true, message: 'Cita cancelada exitosamente - Calendario actualizado' };
     } catch (error) {
       return { success: false, message: 'Error al cancelar cita' };
     }
@@ -225,12 +257,20 @@ export const AuthProvider = ({ children }) => {
     try {
       await reprogramarCitaAPI(citaId, datosReprogramacion);
       
+      console.log('🔄 Cita reprogramada, actualizando calendario...');
+      
+      // Actualizar el estado global de citas para reflejar los cambios en el calendario (silencioso)
+      await cargarTodasLasCitas(true);
+      notificarCambioEnCitas();
+      
       // Cargar notificaciones actualizadas después de reprogramar
       await cargarNotificaciones();
       
-      return { success: true, message: 'Cita reprogramada exitosamente' };
+      console.log('✅ Calendario sincronizado');
+      
+      return { success: true, message: 'Cita reprogramada exitosamente - Calendario actualizado' };
     } catch (error) {
-      console.error('Error al reprogramar cita:', error);
+      console.error('❌ Error al reprogramar cita:', error);
       return { success: false, message: error.response?.data?.error || 'Error al reprogramar cita' };
     }
   };
@@ -260,6 +300,21 @@ export const AuthProvider = ({ children }) => {
       setNotificacionNoLeida(false);
     }
   }, [usuarioActual?.id]);
+
+  // Cargar todas las citas cuando se inicializa la aplicación o cambia el usuario
+  useEffect(() => {
+    const cargarDatosIniciales = async () => {
+      console.log('🚀 Inicializando aplicación...');
+      try {
+        await cargarTodasLasCitas();
+        console.log('✅ Aplicación inicializada correctamente');
+      } catch (error) {
+        console.error('❌ Error al inicializar aplicación:', error);
+      }
+    };
+
+    cargarDatosIniciales();
+  }, [usuarioActual]); // Ejecutar cuando cambie el usuario (incluye cuando se carga la app)
 
   const marcarNotificacionesLeidas = async () => {
     try {
@@ -299,6 +354,7 @@ export const AuthProvider = ({ children }) => {
       notificacionNoLeida,
       cargarNotificaciones,
       marcarNotificacionesLeidas,
+      citasActualizadas, // Para forzar re-renders cuando cambien las citas
     }}>
       {children}
     </AuthContext.Provider>

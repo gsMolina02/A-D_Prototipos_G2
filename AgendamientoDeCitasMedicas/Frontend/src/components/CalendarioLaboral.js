@@ -15,7 +15,8 @@ const CalendarioLaboral = () => {
     cargarTodasLasCitas,
     agendarCita,
     citasAgendadas,
-    todasLasCitas
+    todasLasCitas,
+    citasActualizadas // Para detectar cambios en las citas
   } = useAuth();
 
   const [error, setError] = useState('');
@@ -31,6 +32,19 @@ const CalendarioLaboral = () => {
   const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
 
   const puedeEditar = usuarioActual && (usuarioActual.rol === 'doctor' || usuarioActual.rol === 'administrador');
+
+  // DEBUG: Log del estado del usuario y citas
+  console.log('🔍 DEBUG CalendarioLaboral - Estado actual:', {
+    usuarioActual: usuarioActual ? {
+      id: usuarioActual.id,
+      email: usuarioActual.email,
+      rol: usuarioActual.rol
+    } : null,
+    totalCitas: todasLasCitas.length,
+    citasReprogramadas: todasLasCitas.filter(c => c.estado === 'reprogramada').length,
+    horariosBackend: horariosBackend.length,
+    puedeEditar
+  });
 // Estado para el reporte
 const [reporte, setReporte] = useState([]);
 const [filtroReporte, setFiltroReporte] = useState({
@@ -99,7 +113,7 @@ const generarReporte = async (e) => {
         }
         
         // Cargar todas las citas para verificar disponibilidad
-        await cargarTodasLasCitas();
+        await cargarTodasLasCitas(true); // Silencioso en carga inicial
         
       } catch (error) {
         console.error('Error al cargar horarios:', error);
@@ -111,20 +125,182 @@ const generarReporte = async (e) => {
     cargarHorarios();
   }, [usuarioActual?.id, usuarioActual?.rol]); // Solo depender de id y rol del usuario
 
+  // useEffect adicional para recargar citas cuando hay cambios (reagendamientos, cancelaciones)
+  useEffect(() => {
+    if (citasActualizadas > 0) {
+      // Recargar las citas para reflejar los cambios inmediatamente (silencioso)
+      cargarTodasLasCitas(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [citasActualizadas]); // Solo depender de citasActualizadas, no de la función
+
+  // useEffect adicional para forzar re-renderizado cuando las citas cambian
+  useEffect(() => {
+    // Este efecto se ejecuta cada vez que todasLasCitas cambia
+    // Fuerza al componente a re-evaluar qué horarios están ocupados
+  }, [todasLasCitas]); // Dependencia directa de todasLasCitas
+
   // Determinar de qué doctor se muestran los horarios
   const emailDoctor = usuarioActual?.rol === 'paciente' ? 'axel@gmail.com' : usuarioActual?.email;
   const horarios = usuarioActual?.rol === 'doctor' ? horariosBackend : horariosBackend.filter(h => h.doctor_name && h.doctor_apellido);
   
+  // Función helper para convertir nombre del día a fecha YYYY-MM-DD
+  const convertirDiaAFecha = (nombreDia) => {
+    const hoy = new Date();
+    const diasSemanaArray = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const diaActual = hoy.getDay();
+    const indiceDiaObjetivo = diasSemanaArray.indexOf(nombreDia);
+    
+    if (indiceDiaObjetivo === -1) return null;
+    
+    let diferenciaDias = indiceDiaObjetivo - diaActual;
+    if (diferenciaDias < 0) {
+      diferenciaDias += 7;
+    }
+    
+    const fechaObjetivo = new Date(hoy);
+    fechaObjetivo.setDate(hoy.getDate() + diferenciaDias);
+    const fechaCalculada = fechaObjetivo.toISOString().split('T')[0];
+    
+    // DEBUG: Log para verificar conversión de fechas
+    console.log('🔍 DEBUG convertirDiaAFecha:', {
+      nombreDia,
+      hoy: hoy.toISOString().split('T')[0],
+      diaActual: diasSemanaArray[diaActual],
+      indiceDiaObjetivo,
+      diferenciaDias,
+      fechaCalculada
+    });
+    
+    return fechaCalculada;
+  };
+  
   // Función que determina si un horario (día+horario) ya está ocupado
-  const estaOcupado = (dia, horarioStr, doctorId) => {
+  const estaOcupado = (nombreDia, horarioStr, doctorId) => {
+    const fechaStr = convertirDiaAFecha(nombreDia);
+    if (!fechaStr) return false;
+    
     const ocupado = todasLasCitas.some(cita => {
-      return cita.doctor_id === doctorId &&
-             cita.dia === dia &&
-             cita.horario === horarioStr &&
-             cita.estado !== 'cancelada';
+      const coincideDoctor = String(cita.doctor_id) === String(doctorId);
+      const coincideDia = cita.dia === fechaStr;
+      const coincideHorario = cita.horario === horarioStr;
+      const estadoValido = cita.estado !== 'cancelada';
+      
+      return coincideDoctor && coincideDia && coincideHorario && estadoValido;
     });
     
     return ocupado;
+  };
+
+  // Función para verificar si una cita fue reprogramada
+  const esReprogramada = (nombreDia, horarioStr, doctorId) => {
+    const fechaStr = convertirDiaAFecha(nombreDia);
+    if (!fechaStr) return false;
+    
+    console.log('🔍 DEBUG esReprogramada - INICIO:', {
+      nombreDia,
+      horarioStr,
+      doctorId,
+      fechaStr,
+      totalCitas: todasLasCitas.length
+    });
+    
+    // DEBUG: Mostrar todas las citas para esta fecha
+    const citasEsteFecha = todasLasCitas.filter(cita => cita.dia === fechaStr);
+    console.log(`🔍 DEBUG: Citas en fecha ${fechaStr}:`, citasEsteFecha.length);
+    if (citasEsteFecha.length > 0) {
+      citasEsteFecha.forEach(cita => {
+        console.log(`   ID ${cita.id}: Dr${cita.doctor_id}, ${cita.horario}, Estado: ${cita.estado}`);
+      });
+    }
+    
+    const cita = todasLasCitas.find(cita => {
+      const coincideDoctor = String(cita.doctor_id) === String(doctorId);
+      const coincideDia = cita.dia === fechaStr;
+      const coincideHorario = cita.horario === horarioStr;
+      const estadoValido = cita.estado !== 'cancelada';
+      
+      // Solo mostrar debug para coincidencias potenciales
+      if (coincideDia && coincideDoctor) {
+        console.log('🔍 DEBUG comparando cita POTENCIAL:', {
+          citaId: cita.id,
+          citaDia: cita.dia,
+          citaHorario: cita.horario,
+          citaEstado: cita.estado,
+          citaDoctorId: cita.doctor_id,
+          buscandoHorario: horarioStr,
+          coincideDoctor,
+          coincideDia,
+          coincideHorario,
+          estadoValido,
+          esReprogramada: cita.estado === 'reprogramada'
+        });
+      }
+      
+      return coincideDoctor && coincideDia && coincideHorario && estadoValido;
+    });
+    
+    const resultado = cita && cita.estado === 'reprogramada';
+    
+    // DEBUG: Log resultado final
+    if (resultado) {
+      console.log('🔍 DEBUG: ✅ CITA REPROGRAMADA ENCONTRADA:', {
+        id: cita.id,
+        dia: cita.dia,
+        horario: cita.horario,
+        estado: cita.estado,
+        fechaStr,
+        horarioStr
+      });
+    } else if (cita) {
+      console.log('🔍 DEBUG: ❌ Cita encontrada pero NO reprogramada:', {
+        id: cita.id,
+        estado: cita.estado
+      });
+    } else {
+      console.log('🔍 DEBUG: ❌ No se encontró cita para:', {
+        nombreDia,
+        fechaStr,
+        horarioStr,
+        doctorId
+      });
+    }
+    
+    return resultado;
+  };
+
+  // Función para obtener información de una cita específica
+  const obtenerInfoCita = (nombreDia, horarioStr, doctorId) => {
+    const fechaStr = convertirDiaAFecha(nombreDia);
+    if (!fechaStr) return null;
+    
+    return todasLasCitas.find(cita => {
+      const coincideDoctor = String(cita.doctor_id) === String(doctorId);
+      const coincideDia = cita.dia === fechaStr;
+      const coincideHorario = cita.horario === horarioStr;
+      const estadoValido = cita.estado !== 'cancelada';
+      
+      return coincideDoctor && coincideDia && coincideHorario && estadoValido;
+    });
+  };
+
+  // Función para obtener información del paciente de una cita específica (solo para doctores)
+  const obtenerInfoPacienteCita = (nombreDia, horarioStr, doctorId) => {
+    if (usuarioActual?.rol !== 'doctor') return null;
+    
+    const cita = obtenerInfoCita(nombreDia, horarioStr, doctorId);
+    
+    if (cita) {
+      return {
+        id: cita.paciente_id,
+        nombre: cita.paciente_name || 'Nombre no disponible',
+        apellido: cita.paciente_apellido || 'Apellido no disponible',
+        cedula: cita.paciente_cedula || 'Cédula no disponible',
+        estado: cita.estado
+      };
+    }
+    
+    return null;
   };
 
   const handleChange = (e) => {
@@ -309,6 +485,21 @@ const generarReporte = async (e) => {
       actual.setMinutes(actual.getMinutes() + intervaloNum);
     }
     
+    // DEBUG: Log para verificar horarios generados
+    if (citas.length > 0) {
+      console.log('🔍 DEBUG generarHorariosCitas:', {
+        doctor_id: horario.doctor_id,
+        dia: horario.dia,
+        horaInicio,
+        horaFin,
+        duracionCita,
+        intervalo,
+        totalCitasGeneradas: citas.length,
+        primerasCitas: citas.slice(0, 3),
+        ultimasCitas: citas.slice(-3)
+      });
+    }
+    
     return citas;
   };
 
@@ -316,14 +507,18 @@ const generarReporte = async (e) => {
     if (!usuarioActual) return alert('Debes iniciar sesión.');
     if (usuarioActual.rol !== 'paciente') return alert('Solo los pacientes pueden agendar citas.');
     
-    const confirmacion = window.confirm(`¿Agendar cita para ${horario.dia} ${citaStr}?`);
+    // Convertir el nombre del día a fecha usando la función helper
+    const fechaStr = convertirDiaAFecha(horario.dia);
+    if (!fechaStr) return alert('Error al procesar la fecha.');
+    
+    const confirmacion = window.confirm(`¿Agendar cita para ${horario.dia} ${citaStr} (${fechaStr})?`);
     if (!confirmacion) return;
     
     // Obtener el ID del doctor desde el horario
     const doctorId = horario.doctor_id || 3; // 3 es el ID del doctor axel@gmail.com
     
     const resultado = await agendarCita({
-      dia: horario.dia,
+      dia: fechaStr, // Usar la fecha en formato YYYY-MM-DD
       horario: citaStr,
       doctorId: doctorId,
       especialidad: 'Consulta General' // Sin especialidad específica
@@ -332,7 +527,7 @@ const generarReporte = async (e) => {
     if (resultado.success) {
       alert(resultado.message);
       // Recargar tanto horarios como citas para actualizar disponibilidad
-      await cargarTodasLasCitas();
+      await cargarTodasLasCitas(); // Solo este log es útil para el usuario
       if (usuarioActual.rol === 'paciente') {
         const horarios = await cargarTodosLosHorarios();
         setHorariosBackend(horarios);
@@ -420,9 +615,29 @@ const generarReporte = async (e) => {
                         <div className="details-citas">
                           {generarHorariosCitas(horario).map((cita, idx) => {
   const ocupado = estaOcupado(dia, cita, horario.doctor_id);
+  const reprogramada = esReprogramada(dia, cita, horario.doctor_id);
+  const citaInfo = obtenerInfoCita(dia, cita, horario.doctor_id);
+  const infoPaciente = ocupado ? obtenerInfoPacienteCita(dia, cita, horario.doctor_id) : null;
+  
+  // Determinar si mostrar información del paciente
+  const mostrarInfoPaciente = usuarioActual?.rol === 'doctor' || 
+    (usuarioActual && citaInfo && citaInfo.paciente_id === usuarioActual.id);
+  
+  // Determinar clase CSS según el estado
+  let claseEstado = 'disponible';
+  if (ocupado) {
+    if (reprogramada) {
+      // Las citas reprogramadas siempre se muestran como 'reprogramada' en azul
+      claseEstado = 'reprogramada';
+    } else {
+      claseEstado = 'ocupado';
+    }
+  }
+  
   return (
-    <div key={idx} className={`cita-item ${ocupado ? 'ocupado' : 'disponible'}`}>
-      <span>{cita}</span>
+    <div key={idx} className={`cita-item ${claseEstado}`}>
+      <span className="horario-cita">{cita}</span>
+      
       {usuarioActual?.rol === 'paciente' && (
         <button
           className={`btn-agendar ${ocupado ? 'btn-ocupado' : ''}`}
@@ -432,8 +647,26 @@ const generarReporte = async (e) => {
           {ocupado ? 'No disponible' : 'Agendar'} 
         </button>
       )}
+      
       {ocupado && (
-        <span className="estado-ocupado">Ocupado</span>
+        <div className="info-cita-ocupada">
+          {mostrarInfoPaciente && infoPaciente ? (
+            <div className="info-paciente">
+              <span className={`estado-cita ${reprogramada ? 'reprogramada' : 'ocupado'}`}>
+                {reprogramada ? 'REPROGRAMADA' : 'OCUPADO'}
+              </span>
+              <div className="datos-paciente">
+                <p><strong>ID:</strong> {infoPaciente.id}</p>
+                <p><strong>Paciente:</strong> {infoPaciente.nombre} {infoPaciente.apellido}</p>
+                <p><strong>Cédula:</strong> {infoPaciente.cedula}</p>
+              </div>
+            </div>
+          ) : (
+            <span className={`estado-cita ${reprogramada ? 'reprogramada' : 'ocupado'}`}>
+              {reprogramada ? 'Reprogramada' : 'Ocupado'}
+            </span>
+          )}
+        </div>
       )}
     </div>
   );
