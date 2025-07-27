@@ -35,7 +35,7 @@ const ListaCitas = () => {
     };
 
     cargarCitas();
-  }, [usuarioActual]);
+  }, [usuarioActual?.id, usuarioActual?.rol]); // Solo depender de id y rol del usuario
 
   if (!usuarioActual) {
     return <p>No hay usuario autenticado.</p>;

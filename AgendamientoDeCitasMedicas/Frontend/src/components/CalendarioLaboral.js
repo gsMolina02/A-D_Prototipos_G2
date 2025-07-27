@@ -109,7 +109,7 @@ const generarReporte = async (e) => {
     };
 
     cargarHorarios();
-  }, [usuarioActual, cargarHorariosPorDoctor, cargarTodosLosHorarios, cargarTodasLasCitas]);
+  }, [usuarioActual?.id, usuarioActual?.rol]); // Solo depender de id y rol del usuario
 
   // Determinar de qué doctor se muestran los horarios
   const emailDoctor = usuarioActual?.rol === 'paciente' ? 'axel@gmail.com' : usuarioActual?.email;
