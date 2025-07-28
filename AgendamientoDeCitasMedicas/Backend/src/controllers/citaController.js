@@ -1,4 +1,5 @@
 const { query } = require('../db/db');
+const emailService = require('../services/emailService');
 
 // Funciones auxiliares
 const obtenerNombreDia = (fecha) => {
@@ -28,15 +29,15 @@ const crearCita = async (req, res) => {
     }
 
     // Obtener información del paciente y doctor para las notificaciones
-    const pacienteInfo = await query('SELECT name, apellido FROM users WHERE id = $1', [paciente_id]);
-    const doctorInfo = await query('SELECT name, apellido FROM users WHERE id = $1', [doctor_id]);
+    const pacienteResult = await query('SELECT name, apellido, email FROM users WHERE id = $1', [paciente_id]);
+    const doctorResult = await query('SELECT name, apellido, email FROM users WHERE id = $1', [doctor_id]);
 
-    if (pacienteInfo.rows.length === 0 || doctorInfo.rows.length === 0) {
+    if (pacienteResult.rows.length === 0 || doctorResult.rows.length === 0) {
       return res.status(400).json({ error: 'Usuario no encontrado' });
     }
 
-    const paciente = pacienteInfo.rows[0];
-    const doctor = doctorInfo.rows[0];
+    const paciente = pacienteResult.rows[0];
+    const doctor = doctorResult.rows[0];
 
     // Crear la cita
     const result = await query(
@@ -46,6 +47,21 @@ const crearCita = async (req, res) => {
 
     const nuevaCita = result.rows[0];
     const fechaCita = `${dia} ${horario}`;
+
+    // 📧 ENVIAR EMAIL DE CONFIRMACIÓN AL PACIENTE
+    if (paciente.email) {
+      try {
+        await emailService.notificarCitaConfirmada(paciente.email, {
+          pacienteNombre: `${paciente.name} ${paciente.apellido}`,
+          doctorNombre: `Dr. ${doctor.name} ${doctor.apellido}`,
+          fecha: dia,
+          horario: horario,
+          especialidad: especialidad || 'Consulta General'
+        });
+      } catch (emailError) {
+        // Email opcional - no fallar la cita por error de email
+      }
+    }
 
     // Crear notificaciones para ambos usuarios
     
@@ -122,8 +138,8 @@ const cancelarCita = async (req, res) => {
     // Primero obtener la información completa de la cita antes de cancelarla
     const citaInfo = await query(`
       SELECT c.*, 
-             p.name as paciente_name, p.apellido as paciente_apellido,
-             d.name as doctor_name, d.apellido as doctor_apellido
+             p.name as paciente_name, p.apellido as paciente_apellido, p.email as paciente_email,
+             d.name as doctor_name, d.apellido as doctor_apellido, d.email as doctor_email
       FROM citas c
       JOIN users p ON c.paciente_id = p.id
       JOIN users d ON c.doctor_id = d.id
@@ -141,6 +157,21 @@ const cancelarCita = async (req, res) => {
       'UPDATE citas SET estado = $1, motivo_cancelacion = $2 WHERE id = $3 RETURNING *',
       ['cancelada', motivo, id]
     );
+
+    // 📧 ENVIAR EMAIL DE CANCELACIÓN AL PACIENTE
+    if (cita.paciente_email) {
+      try {
+        await emailService.notificarCitaCancelada(cita.paciente_email, {
+          pacienteNombre: `${cita.paciente_name} ${cita.paciente_apellido}`,
+          doctorNombre: `Dr. ${cita.doctor_name} ${cita.doctor_apellido}`,
+          fecha: cita.dia,
+          horario: cita.horario,
+          motivo: motivo || 'No especificado'
+        });
+      } catch (emailError) {
+        // Email opcional - no fallar la cancelación por error de email
+      }
+    }
 
     // Crear notificaciones para ambos usuarios
     const fechaCita = `${cita.dia} ${cita.horario}`;
@@ -200,8 +231,8 @@ const reprogramarCita = async (req, res) => {
     // VALIDACIÓN 1: SELECCIÓN DE CITA - Verificar que la cita exista y sea válida
     const citaActualInfo = await query(`
       SELECT c.*, 
-             p.name as paciente_name, p.apellido as paciente_apellido,
-             d.name as doctor_name, d.apellido as doctor_apellido
+             p.name as paciente_name, p.apellido as paciente_apellido, p.email as paciente_email,
+             d.name as doctor_name, d.apellido as doctor_apellido, d.email as doctor_email
       FROM citas c
       JOIN users p ON c.paciente_id = p.id
       JOIN users d ON c.doctor_id = d.id
@@ -314,12 +345,22 @@ const reprogramarCita = async (req, res) => {
 
     const citaReprogramada = result.rows[0];
 
-    console.log('✅ Cita reprogramada exitosamente:', {
-      id: citaReprogramada.id,
-      nuevo_estado: citaReprogramada.estado,
-      nueva_fecha: citaReprogramada.dia,
-      nuevo_horario: citaReprogramada.horario
-    });
+    // 📧 ENVIAR EMAIL DE REPROGRAMACIÓN AL PACIENTE
+    if (citaActual.paciente_email) {
+      try {
+        await emailService.notificarCitaReprogramada(citaActual.paciente_email, {
+          pacienteNombre: `${citaActual.paciente_name} ${citaActual.paciente_apellido}`,
+          doctorNombre: `Dr. ${citaActual.doctor_name} ${citaActual.doctor_apellido}`,
+          fechaAnterior: citaActual.dia,
+          horarioAnterior: citaActual.horario,
+          nuevaFecha: nuevo_dia,
+          nuevoHorario: nuevo_horario,
+          motivo: motivo || 'Reprogramación necesaria'
+        });
+      } catch (emailError) {
+        // Email opcional - no fallar la reprogramación por error de email
+      }
+    }
 
     // Crear notificaciones para ambos usuarios
     

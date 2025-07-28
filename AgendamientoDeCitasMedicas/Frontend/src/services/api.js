@@ -49,12 +49,63 @@ export const obtenerTodasLasCitas = async () => {
   return await axios.get(`${apiUrl}/citas`);
 };
 
+export const marcarCitaAtendida = async (id) => {
+  return await axios.put(`${apiUrl}/citas/${id}/atendida`);
+};
+
+// ========== SISTEMA DE EMAILS INDEPENDIENTE ==========
+
+// Enviar email de confirmación
+export const enviarEmailConfirmacion = async (citaId) => {
+  return await axios.post(`${apiUrl}/emails/confirmacion`, { citaId });
+};
+
+// Enviar email de cancelación
+export const enviarEmailCancelacion = async (citaId, motivo) => {
+  return await axios.post(`${apiUrl}/emails/cancelacion`, { citaId, motivo });
+};
+
+// Enviar email de reprogramación
+export const enviarEmailReprogramacion = async (citaId, nuevaFecha, nuevoHorario, motivo) => {
+  return await axios.post(`${apiUrl}/emails/reprogramacion`, { 
+    citaId, 
+    nuevaFecha, 
+    nuevoHorario, 
+    motivo 
+  });
+};
+
+// Enviar recordatorios masivos
+export const enviarRecordatoriosMasivos = async () => {
+  return await axios.post(`${apiUrl}/emails/recordatorios`);
+};
+
+// Enviar email personalizado
+export const enviarEmailPersonalizado = async (destinatario, asunto, mensaje) => {
+  return await axios.post(`${apiUrl}/emails/personalizado`, { 
+    destinatario, 
+    asunto, 
+    mensaje 
+  });
+};
+
+// Obtener estadísticas de emails
+export const obtenerEstadisticasEmail = async () => {
+  return await axios.get(`${apiUrl}/emails/estadisticas`);
+};
+
+// ========== FUNCIONES HEREDADAS (SIN EMAILS) ==========
+
 export const cancelarCita = async (id, motivo) => {
   return await axios.put(`${apiUrl}/citas/${id}/cancelar`, { motivo });
 };
 
 export const reprogramarCita = async (id, data) => {
   return await axios.put(`${apiUrl}/citas/${id}/reprogramar`, data);
+};
+
+export const enviarRecordatorios = async () => {
+  return await axios.post(`${apiUrl}/citas/recordatorios`);
 };
 
 // Notificaciones

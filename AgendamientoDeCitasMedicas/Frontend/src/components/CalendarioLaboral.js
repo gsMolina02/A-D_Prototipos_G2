@@ -128,7 +128,7 @@ const generarReporte = async (e) => {
   }, [todasLasCitas]); // Dependencia directa de todasLasCitas
 
   // Determinar de qué doctor se muestran los horarios
-  const emailDoctor = usuarioActual?.rol === 'paciente' ? 'axel@gmail.com' : usuarioActual?.email;
+  const emailDoctor = usuarioActual?.rol === 'paciente' ? 'axeldoge4@gmail.com' : usuarioActual?.email;
   const horarios = usuarioActual?.rol === 'doctor' ? horariosBackend : horariosBackend.filter(h => h.doctor_name && h.doctor_apellido);
   
   // Función helper para convertir nombre del día a fecha YYYY-MM-DD
@@ -417,7 +417,7 @@ const generarReporte = async (e) => {
     if (!confirmacion) return;
     
     // Obtener el ID del doctor desde el horario
-    const doctorId = horario.doctor_id || 3; // 3 es el ID del doctor axel@gmail.com
+    const doctorId = horario.doctor_id || 3; // 3 es el ID del doctor axeldoge4@gmail.com
     
     const resultado = await agendarCita({
       dia: fechaStr, // Usar la fecha en formato YYYY-MM-DD
