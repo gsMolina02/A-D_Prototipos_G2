@@ -564,7 +564,7 @@ const ReporteCitas = () => {
           color: '#6b7280',
           fontSize: '16px'
         }}>
-          No hay datos para el período seleccionado.
+          No hay datos para el periodo seleccionado.
         </div>
       )}
     </div>
