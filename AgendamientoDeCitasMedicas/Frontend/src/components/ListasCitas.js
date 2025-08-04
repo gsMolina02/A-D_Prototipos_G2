@@ -12,7 +12,7 @@ const ListaCitas = () => {
     cargarHorariosPorDoctor,
     todasLasCitas
   } = useAuth();
-  const [citas, setCitas] = useState([]);
+  const [citas, setCitas] = useState(() => []);
   const [loading, setLoading] = useState(false);
   const [mostrarFormularioReprogramar, setMostrarFormularioReprogramar] = useState(null);
   const [formReprogramar, setFormReprogramar] = useState({
@@ -196,7 +196,7 @@ const ListaCitas = () => {
     return <p>Cargando citas...</p>;
   }
 
-  if (citas.length === 0) {
+  if (!citas || citas.length === 0) {
     return <p>No tienes citas agendadas.</p>;
   }
 

@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
-require('dotenv').config({ path: __dirname + '/../.env' });
+require('dotenv').config({ path: __dirname + '/../../.env' });
+
 // Configuración de la conexión a PostgreSQL
 const pool = new Pool({
   user: process.env.DB_USER,        // Usar variable de entorno
