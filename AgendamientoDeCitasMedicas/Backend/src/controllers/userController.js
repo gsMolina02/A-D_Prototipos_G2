@@ -160,11 +160,7 @@ const registerUser = async (req, res) => {
       [name.trim(), apellido.trim(), cedula, email.trim(), telefono, password, rol]
     );
 
-    console.log('📋 Usuario registrado exitosamente:', {
-      id: result.rows[0].id,
-      nombre: result.rows[0].name,
-      cedula: result.rows[0].cedula
-    });
+    // Usuario registrado exitosamente
 
     return res.status(201).json({ 
       message: 'Usuario registrado exitosamente', 

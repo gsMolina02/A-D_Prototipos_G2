@@ -8,6 +8,7 @@ const citaRoutes = require('./routes/citaRoutes');
 const notificacionRoutes = require('./routes/notificacionRoutes');
 const citasRoutes = require('./routes/citas');
 const emailRoutes = require('./routes/emailRoutes'); // Rutas de email independientes
+const whatsappRoutes = require('./routes/whatsappRoutes'); // Rutas de WhatsApp independientes
 
 dotenv.config();
 
@@ -35,6 +36,7 @@ app.use('/api/citas', citaRoutes);
 app.use('/api/notificaciones', notificacionRoutes);
 app.use('/api/citasreportes', citasRoutes);
 app.use('/api/emails', emailRoutes); // Sistema de emails independiente
+app.use('/api/whatsapp', whatsappRoutes); // Sistema de WhatsApp independiente
 
 // Agregar ruta base para verificar que el backend está funcionando
 app.get('/', (req, res) => {

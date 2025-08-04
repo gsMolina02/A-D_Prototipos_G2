@@ -7,7 +7,6 @@ import ListaCitas from './components/ListasCitas';
 import './App.css';
 import Notificaciones from './components/Notificaciones';
 import ReporteCitas from './components/ReporteCitas'; // Importa el componente de reporte de citas
-import GestionEmails from './components/GestionEmails'; // Importa el componente de gestión de emails
 
 // Componente Dashboard (mostrar cuando usuario está logueado)
 const Dashboard = () => {
@@ -22,8 +21,6 @@ const Dashboard = () => {
         return <ListaCitas />;
       case 'reporte':
         return <ReporteCitas />;
-      case 'emails':
-        return <GestionEmails />;
       case 'perfil':
       default:
         return (
@@ -119,25 +116,12 @@ const Dashboard = () => {
             <span className="nav-text">Mis Citas</span>
           </button>
           
-          {/* Botones solo visibles para médicos */}
+          {/* Botón solo visible para médicos */}
           {usuarioActual.rol === 'doctor' && (
-            <>
-              <button
-                className={`sidebar-nav-item ${vistaActiva === 'emails' ? 'active' : ''}`}
-                onClick={() => setVistaActiva('emails')}
-              >
-                <span className="nav-icon">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
-                  </svg>
-                </span>
-                <span className="nav-text">Gestión de Emails</span>
-              </button>
-              
-              <button
-                className={`sidebar-nav-item ${vistaActiva === 'reporte' ? 'active' : ''}`}
-                onClick={() => setVistaActiva('reporte')}
-              >
+            <button
+              className={`sidebar-nav-item ${vistaActiva === 'reporte' ? 'active' : ''}`}
+              onClick={() => setVistaActiva('reporte')}
+            >
                 <span className="nav-icon">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
@@ -145,7 +129,6 @@ const Dashboard = () => {
                 </span>
                 <span className="nav-text">Reporte de Citas</span>
               </button>
-            </>
           )}
         </nav>
         
@@ -171,7 +154,6 @@ const Dashboard = () => {
             {vistaActiva === 'perfil' && 'Mi Perfil'}
             {vistaActiva === 'calendario' && 'Calendario Laboral'}
             {vistaActiva === 'citas' && 'Mis Citas'}
-            {vistaActiva === 'emails' && 'Gestión de Emails'}
             {vistaActiva === 'reporte' && 'Reporte de Citas'}
           </h2>
         </div>

@@ -1,5 +1,6 @@
 const { query } = require('../db/db');
 const emailService = require('../services/emailService');
+const whatsappService = require('../services/whatsappService');
 
 // Funciones auxiliares
 const obtenerNombreDia = (fecha) => {
@@ -29,8 +30,8 @@ const crearCita = async (req, res) => {
     }
 
     // Obtener información del paciente y doctor para las notificaciones
-    const pacienteResult = await query('SELECT name, apellido, email FROM users WHERE id = $1', [paciente_id]);
-    const doctorResult = await query('SELECT name, apellido, email FROM users WHERE id = $1', [doctor_id]);
+    const pacienteResult = await query('SELECT name, apellido, email, telefono FROM users WHERE id = $1', [paciente_id]);
+    const doctorResult = await query('SELECT name, apellido, email, telefono FROM users WHERE id = $1', [doctor_id]);
 
     if (pacienteResult.rows.length === 0 || doctorResult.rows.length === 0) {
       return res.status(400).json({ error: 'Usuario no encontrado' });
@@ -60,6 +61,21 @@ const crearCita = async (req, res) => {
         });
       } catch (emailError) {
         // Email opcional - no fallar la cita por error de email
+      }
+    }
+
+    // 📱 ENVIAR WHATSAPP DE CONFIRMACIÓN AL PACIENTE
+    if (paciente.telefono) {
+      try {
+        await whatsappService.notificarCitaConfirmada(paciente.telefono, {
+          pacienteNombre: `${paciente.name} ${paciente.apellido}`,
+          doctorNombre: `Dr. ${doctor.name} ${doctor.apellido}`,
+          fecha: dia,
+          horario: horario,
+          especialidad: especialidad || 'Consulta General'
+        });
+      } catch (whatsappError) {
+        // WhatsApp opcional - no fallar la cita por error de WhatsApp
       }
     }
 
@@ -138,8 +154,8 @@ const cancelarCita = async (req, res) => {
     // Primero obtener la información completa de la cita antes de cancelarla
     const citaInfo = await query(`
       SELECT c.*, 
-             p.name as paciente_name, p.apellido as paciente_apellido, p.email as paciente_email,
-             d.name as doctor_name, d.apellido as doctor_apellido, d.email as doctor_email
+             p.name as paciente_name, p.apellido as paciente_apellido, p.email as paciente_email, p.telefono as paciente_telefono,
+             d.name as doctor_name, d.apellido as doctor_apellido, d.email as doctor_email, d.telefono as doctor_telefono
       FROM citas c
       JOIN users p ON c.paciente_id = p.id
       JOIN users d ON c.doctor_id = d.id
@@ -170,6 +186,21 @@ const cancelarCita = async (req, res) => {
         });
       } catch (emailError) {
         // Email opcional - no fallar la cancelación por error de email
+      }
+    }
+
+    // 📱 ENVIAR WHATSAPP DE CANCELACIÓN AL PACIENTE
+    if (cita.paciente_telefono) {
+      try {
+        await whatsappService.notificarCitaCancelada(cita.paciente_telefono, {
+          pacienteNombre: `${cita.paciente_name} ${cita.paciente_apellido}`,
+          doctorNombre: `Dr. ${cita.doctor_name} ${cita.doctor_apellido}`,
+          fecha: cita.dia,
+          horario: cita.horario,
+          motivo: motivo || 'No especificado'
+        });
+      } catch (whatsappError) {
+        // WhatsApp opcional - no fallar la cancelación por error de WhatsApp
       }
     }
 
@@ -217,7 +248,7 @@ const obtenerTodasLasCitas = async (req, res) => {
 
     res.status(200).json(result.rows);
   } catch (error) {
-    console.error('❌ Error al obtener todas las citas:', error);
+    console.error('Error al obtener todas las citas:', error);
     res.status(500).json({ error: 'Error interno del servidor' });
   }
 };
@@ -231,8 +262,8 @@ const reprogramarCita = async (req, res) => {
     // VALIDACIÓN 1: SELECCIÓN DE CITA - Verificar que la cita exista y sea válida
     const citaActualInfo = await query(`
       SELECT c.*, 
-             p.name as paciente_name, p.apellido as paciente_apellido, p.email as paciente_email,
-             d.name as doctor_name, d.apellido as doctor_apellido, d.email as doctor_email
+             p.name as paciente_name, p.apellido as paciente_apellido, p.email as paciente_email, p.telefono as paciente_telefono,
+             d.name as doctor_name, d.apellido as doctor_apellido, d.email as doctor_email, d.telefono as doctor_telefono
       FROM citas c
       JOIN users p ON c.paciente_id = p.id
       JOIN users d ON c.doctor_id = d.id
@@ -362,6 +393,23 @@ const reprogramarCita = async (req, res) => {
       }
     }
 
+    // 📱 ENVIAR WHATSAPP DE REPROGRAMACIÓN AL PACIENTE
+    if (citaActual.paciente_telefono) {
+      try {
+        await whatsappService.notificarCitaReprogramada(citaActual.paciente_telefono, {
+          pacienteNombre: `${citaActual.paciente_name} ${citaActual.paciente_apellido}`,
+          doctorNombre: `Dr. ${citaActual.doctor_name} ${citaActual.doctor_apellido}`,
+          fechaAnterior: citaActual.dia,
+          horarioAnterior: citaActual.horario,
+          nuevaFecha: nuevo_dia,
+          nuevoHorario: nuevo_horario,
+          motivo: motivo || 'Reprogramación necesaria'
+        });
+      } catch (whatsappError) {
+        // WhatsApp opcional - no fallar la reprogramación por error de WhatsApp
+      }
+    }
+
     // Crear notificaciones para ambos usuarios
     
     // Notificación para el paciente
@@ -475,7 +523,7 @@ const enviarRecordatoriosCitas = async () => {
     
     return { success: true, citasProcessadas: citas.length };
   } catch (error) {
-    console.error('❌ Error al enviar recordatorios:', error);
+    console.error('Error al enviar recordatorios:', error);
     return { success: false, error: error.message };
   }
 };
