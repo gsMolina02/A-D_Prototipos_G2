@@ -20,19 +20,27 @@
     },
     {
       "src": "/static/(.*)",
-      "dest": "Frontend/build/static/$1"
+      "dest": "Frontend/static/$1"
     },
     {
       "src": "/favicon.ico",
-      "dest": "Frontend/build/favicon.ico"
+      "dest": "Frontend/favicon.ico"
     },
     {
       "src": "/manifest.json",
-      "dest": "Frontend/build/manifest.json"
+      "dest": "Frontend/manifest.json"
+    },
+    {
+      "src": "/logo192.png",
+      "dest": "Frontend/logo192.png"
+    },
+    {
+      "src": "/logo512.png",
+      "dest": "Frontend/logo512.png"
     },
     {
       "src": "/(.*)",
-      "dest": "Frontend/build/index.html"
+      "dest": "Frontend/index.html"
     }
   ]
 }
