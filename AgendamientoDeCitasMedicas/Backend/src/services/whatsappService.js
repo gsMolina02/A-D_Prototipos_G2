@@ -106,20 +106,49 @@ Por favor, llegue 15 minutos antes.
 
 // Funciones principales del servicio
 const whatsappService = {
+  // Función auxiliar para formatear número de teléfono
+  formatearTelefono: (telefono) => {
+    // Si ya tiene formato correcto, devolverlo
+    if (telefono.startsWith('+593')) {
+      return telefono;
+    }
+    
+    // Si empieza con 593, agregar +
+    if (telefono.startsWith('593')) {
+      return '+' + telefono;
+    }
+    
+    // Si empieza con 0, convertir formato nacional a internacional
+    if (telefono.startsWith('0')) {
+      return '+593' + telefono.substring(1);
+    }
+    
+    // Si es solo número (9 o 10 dígitos), agregar código de país
+    if (telefono.length === 9 || telefono.length === 10) {
+      return '+593' + telefono;
+    }
+    
+    // Devolver tal como está si no coincide con ningún patrón
+    return telefono;
+  },
+
   // Notificar confirmación de cita
   notificarCitaConfirmada: async (telefono, datos) => {
     try {
       const client = createTwilioClient();
       const mensaje = plantillas.confirmacion(datos);
+      const telefonoFormateado = whatsappService.formatearTelefono(telefono);
       
       const result = await client.messages.create({
         from: process.env.TWILIO_WHATSAPP_FROM,
-        to: `whatsapp:${telefono}`,
+        to: `whatsapp:${telefonoFormateado}`,
         body: mensaje
       });
 
+      console.log(`✅ WhatsApp confirmación enviado: ${result.sid}`);
       return { success: true, messageId: result.sid };
     } catch (error) {
+      console.error(`❌ Error enviando WhatsApp confirmación: ${error.message}`);
       return { success: false, error: error.message };
     }
   },
@@ -129,15 +158,18 @@ const whatsappService = {
     try {
       const client = createTwilioClient();
       const mensaje = plantillas.cancelacion(datos);
+      const telefonoFormateado = whatsappService.formatearTelefono(telefono);
       
       const result = await client.messages.create({
         from: process.env.TWILIO_WHATSAPP_FROM,
-        to: `whatsapp:${telefono}`,
+        to: `whatsapp:${telefonoFormateado}`,
         body: mensaje
       });
 
+      console.log(`✅ WhatsApp cancelación enviado: ${result.sid}`);
       return { success: true, messageId: result.sid };
     } catch (error) {
+      console.error(`❌ Error enviando WhatsApp cancelación: ${error.message}`);
       return { success: false, error: error.message };
     }
   },
@@ -147,15 +179,18 @@ const whatsappService = {
     try {
       const client = createTwilioClient();
       const mensaje = plantillas.reprogramacion(datos);
+      const telefonoFormateado = whatsappService.formatearTelefono(telefono);
       
       const result = await client.messages.create({
         from: process.env.TWILIO_WHATSAPP_FROM,
-        to: `whatsapp:${telefono}`,
+        to: `whatsapp:${telefonoFormateado}`,
         body: mensaje
       });
 
+      console.log(`✅ WhatsApp reprogramación enviado: ${result.sid}`);
       return { success: true, messageId: result.sid };
     } catch (error) {
+      console.error(`❌ Error enviando WhatsApp reprogramación: ${error.message}`);
       return { success: false, error: error.message };
     }
   },

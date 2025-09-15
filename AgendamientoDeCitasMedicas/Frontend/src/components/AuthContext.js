@@ -10,7 +10,7 @@ import {
   obtenerHorariosPorDoctor,
   obtenerTodosLosHorarios,
   eliminarHorario,
-  limpiarHorariosDoctor,
+  limpiarHorariosDoctor as limpiarHorariosDoctorAPI,
   registerUser,
   loginUser,
   marcarComoLeida,
@@ -102,7 +102,7 @@ export const AuthProvider = ({ children }) => {
 
   const limpiarHorariosDoctor = async (emailDoctor) => {
     try {
-      await limpiarHorariosDoctor(usuarioActual.id);
+      await limpiarHorariosDoctorAPI(usuarioActual.id);
       setHorariosPorDoctor(prev => ({
         ...prev,
         [emailDoctor]: []
@@ -118,7 +118,7 @@ export const AuthProvider = ({ children }) => {
       await eliminarHorario(horarioId);
       setHorariosPorDoctor(prev => ({
         ...prev,
-        [emailDoctor]: prev[emailDoctor].filter(h => h.id !== horarioId)
+        [emailDoctor]: (prev[emailDoctor] || []).filter(h => h.id !== horarioId)
       }));
       return { success: true, message: 'Horario eliminado correctamente' };
     } catch (error) {

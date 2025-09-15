@@ -1,6 +1,9 @@
 import axios from 'axios';
 
-const apiUrl = 'http://localhost:5000/api';  // URL base del backend
+// Configurar URL base según el entorno
+const apiUrl = process.env.NODE_ENV === 'production' 
+  ? '/api'  // En producción, usar ruta relativa (Vercel maneja el routing)
+  : 'http://localhost:5000/api';  // En desarrollo, usar localhost
 
 // Usuarios
 export const loginUser = async (data) => {

@@ -49,7 +49,7 @@ const crearCita = async (req, res) => {
     const nuevaCita = result.rows[0];
     const fechaCita = `${dia} ${horario}`;
 
-    // 📧 ENVIAR EMAIL DE CONFIRMACIÓN AL PACIENTE
+    // ENVIAR EMAIL DE CONFIRMACIÓN AL PACIENTE
     if (paciente.email) {
       try {
         await emailService.notificarCitaConfirmada(paciente.email, {
@@ -64,7 +64,7 @@ const crearCita = async (req, res) => {
       }
     }
 
-    // 📱 ENVIAR WHATSAPP DE CONFIRMACIÓN AL PACIENTE
+    // ENVIAR WHATSAPP DE CONFIRMACIÓN AL PACIENTE
     if (paciente.telefono) {
       try {
         await whatsappService.notificarCitaConfirmada(paciente.telefono, {
@@ -174,7 +174,7 @@ const cancelarCita = async (req, res) => {
       ['cancelada', motivo, id]
     );
 
-    // 📧 ENVIAR EMAIL DE CANCELACIÓN AL PACIENTE
+    // ENVIAR EMAIL DE CANCELACIÓN AL PACIENTE
     if (cita.paciente_email) {
       try {
         await emailService.notificarCitaCancelada(cita.paciente_email, {

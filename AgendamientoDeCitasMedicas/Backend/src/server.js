@@ -14,14 +14,26 @@ dotenv.config();
 
 const app = express();
 
-// Habilitar CORS
-app.use(cors());
+// Configurar CORS para producción
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://tu-app.vercel.app', 'https://*.vercel.app'] 
+    : ['http://localhost:3000', 'http://localhost:3001'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+
+app.use(cors(corsOptions));
 
 // Permitir que Express reciba datos JSON
 app.use(express.json());
 
-// Usar Helmet para seguridad
-app.use(helmet());
+// Usar Helmet para seguridad con configuración para Vercel
+app.use(helmet({
+  contentSecurityPolicy: false, // Desactivar para Vercel
+  crossOriginEmbedderPolicy: false
+}));
 
 // Middleware para registrar todas las solicitudes entrantes (comentado para reducir logs)
 // app.use((req, res, next) => {
@@ -50,12 +62,19 @@ app.use((req, res) => {
 
 // Configurar el puerto del servidor
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Servidor corriendo en el puerto ${PORT}`);
-  
-  // Inicializar sistema de recordatorios
-  inicializarRecordatorios();
-});
+
+// Para Vercel, exportar la app sin listen
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
+    
+    // Inicializar sistema de recordatorios solo en desarrollo
+    inicializarRecordatorios();
+  });
+}
+
+// Exportar para Vercel
+module.exports = app;
 
 // Sistema de recordatorios automático
 function inicializarRecordatorios() {

@@ -1,0 +1,36 @@
+# Railway Deployment
+version: 1
+
+services:
+  backend:
+    source: Backend
+    port: 5000
+    env:
+      - NODE_ENV=production
+    build:
+      command: npm install
+    start:
+      command: npm start
+    
+  postgres:
+    image: postgres:15
+    env:
+      - POSTGRES_DB=citas_medicas
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  frontend:
+    source: Frontend
+    port: 3000
+    env:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=${{backend.url}}/api
+    build:
+      command: npm install && npm run build
+    start:
+      command: npx serve -s build -p 3000
+
+volumes:
+  postgres_data:

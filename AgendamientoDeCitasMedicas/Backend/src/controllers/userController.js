@@ -1,5 +1,6 @@
 // userController.js
 const { query } = require('../db/db'); // Asegúrate de que esta ruta sea correcta
+const bcrypt = require('bcryptjs');
 
 // Validación de solo letras para nombres
 const validarSoloLetras = (texto) => {
@@ -81,7 +82,10 @@ const loginUser = async (req, res) => {
 
     const user = result.rows[0];
 
-    if (password.trim() === user.password.trim()) {
+    // Usar bcrypt para comparar la contraseña
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    
+    if (passwordMatch) {
       res.status(200).json({ message: 'Login successful', user });
     } else {
       res.status(400).json({ error: 'Incorrect password' });
@@ -154,10 +158,14 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ error: 'Este número de teléfono ya está registrado' });
     }
 
+    // Hashear la contraseña antes de guardarla
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     // Insertar usuario - usar 'name' que es el campo correcto en la BD
     const result = await query(
       'INSERT INTO users (name, apellido, cedula, email, telefono, password, rol) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, name, apellido, cedula, email, telefono, rol',
-      [name.trim(), apellido.trim(), cedula, email.trim(), telefono, password, rol]
+      [name.trim(), apellido.trim(), cedula, email.trim(), telefono, hashedPassword, rol]
     );
 
     // Usuario registrado exitosamente

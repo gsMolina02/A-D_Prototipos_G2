@@ -1,0 +1,23 @@
+# Render Blueprint
+services:
+  - type: web
+    name: citas-medicas-backend
+    env: node
+    buildCommand: cd Backend && npm install
+    startCommand: cd Backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    
+  - type: web
+    name: citas-medicas-frontend
+    env: static
+    buildCommand: cd Frontend && npm install && npm run build
+    staticPublishPath: Frontend/build
+    
+  - type: postgres
+    name: citas-medicas-db
+    databaseName: citas_medicas
+    user: postgres
