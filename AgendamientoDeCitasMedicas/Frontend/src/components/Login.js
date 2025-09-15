@@ -83,7 +83,7 @@ const Login = ({ onNavigate }) => {
       {/* Usuarios de prueba para facilitar testing */}
       <div className="test-users">
         <h4>Usuarios de prueba:</h4>
-        <p><strong>Doctor:</strong> axeldoge4@gmail.com / 1234</p>
+        <p><strong>Doctor:</strong> axeldoge4@gmail.com / doctor123</p>
         <p><strong>Paciente:</strong> juan@example.com / tu_contraseña</p>
       </div>
     </div>
