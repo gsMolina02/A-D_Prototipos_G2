@@ -1,0 +1,13 @@
+node_modules
+.git
+*.log
+.env.local
+.env.development
+.env.test
+Backend/node_modules
+Frontend/node_modules
+Frontend/src
+Frontend/public
+README.md
+*.md
+.gitignore
