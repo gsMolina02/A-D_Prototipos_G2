@@ -19,14 +19,27 @@
       "dest": "Backend/src/server.js"
     },
     {
+      "src": "/static/(.*)",
+      "dest": "Frontend/build/static/$1"
+    },
+    {
+      "src": "/manifest.json",
+      "dest": "Frontend/build/manifest.json"
+    },
+    {
+      "src": "/favicon.ico",
+      "dest": "Frontend/build/favicon.ico"
+    },
+    {
       "src": "/(.*)",
-      "dest": "Frontend/build/$1"
+      "dest": "Frontend/build/index.html"
     }
   ],
   "env": {
     "NODE_ENV": "production",
     "DISABLE_ESLINT_PLUGIN": "true",
     "ESLINT_NO_DEV_ERRORS": "true",
-    "GENERATE_SOURCEMAP": "false"
+    "GENERATE_SOURCEMAP": "false",
+    "CI": "false"
   }
 }
