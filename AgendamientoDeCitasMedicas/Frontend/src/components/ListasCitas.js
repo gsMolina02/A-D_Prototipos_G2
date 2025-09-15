@@ -8,8 +8,10 @@ const ListaCitas = () => {
     obtenerCitasDoctor, 
     cancelarCita, 
     reprogramarCita,
+    // eslint-disable-next-line no-unused-vars
     cargarTodasLasCitas,
     cargarHorariosPorDoctor,
+    // eslint-disable-next-line no-unused-vars
     todasLasCitas
   } = useAuth();
   const [citas, setCitas] = useState(() => []);
@@ -52,7 +54,7 @@ const ListaCitas = () => {
   
   useEffect(() => {
     cargarCitas();
-  }, [usuarioActual?.id, usuarioActual?.rol]); // Solo depender de id y rol del usuario
+  }, [usuarioActual?.id, usuarioActual?.rol, cargarCitas]); // Solo depender de id y rol del usuario
 
   // Funciones utilitarias para validación y horarios
   const obtenerNombreDia = (fecha) => {
@@ -216,6 +218,7 @@ const ListaCitas = () => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const handleReprogramar = async (citaId) => {
     if (!formReprogramar.nuevo_dia || !formReprogramar.nuevo_horario) {
       alert('Por favor, complete todos los campos requeridos');

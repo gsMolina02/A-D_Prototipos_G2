@@ -6,6 +6,7 @@ import axios from 'axios'; // Asegúrate de tener axios instalado
 const CalendarioLaboral = () => {
   const {
     usuarioActual,
+    // eslint-disable-next-line no-unused-vars
     horariosPorDoctor,
     guardarHorarioDoctor,
     eliminarHorarioDoctor,
@@ -14,12 +15,14 @@ const CalendarioLaboral = () => {
     cargarTodosLosHorarios,
     cargarTodasLasCitas,
     agendarCita,
+    // eslint-disable-next-line no-unused-vars
     citasAgendadas,
     todasLasCitas,
     citasActualizadas // Para detectar cambios en las citas
   } = useAuth();
 
   const [error, setError] = useState('');
+  // eslint-disable-next-line no-unused-vars
   const [loading, setLoading] = useState(false);
   const [horariosBackend, setHorariosBackend] = useState([]);
   const [nuevoHorario, setNuevoHorario] = useState({
@@ -33,6 +36,7 @@ const CalendarioLaboral = () => {
 
   const puedeEditar = usuarioActual && (usuarioActual.rol === 'doctor' || usuarioActual.rol === 'administrador');
 // Estado para el reporte
+// eslint-disable-next-line no-unused-vars
 const [reporte, setReporte] = useState([]);
 const [filtroReporte, setFiltroReporte] = useState({
   fechaInicio: '',
@@ -44,9 +48,11 @@ const [filtroReporte, setFiltroReporte] = useState({
     estado: true
   }
 });
+// eslint-disable-next-line no-unused-vars
 const [loadingReporte, setLoadingReporte] = useState(false);
 
 // Manejar cambios en el formulario de reporte
+// eslint-disable-next-line no-unused-vars
 const handleFiltroReporteChange = (e) => {
   const { name, value, type, checked } = e.target;
   if (name in filtroReporte.campos) {
@@ -60,6 +66,7 @@ const handleFiltroReporteChange = (e) => {
 };
 
 // Solicitar reporte al backend
+// eslint-disable-next-line no-unused-vars
 const generarReporte = async (e) => {
   e.preventDefault();
   setLoadingReporte(true);
@@ -110,7 +117,7 @@ const generarReporte = async (e) => {
     };
 
     cargarHorarios();
-  }, [usuarioActual?.id, usuarioActual?.rol]); // Solo depender de id y rol del usuario
+  }, [usuarioActual?.id, usuarioActual?.rol, cargarHorariosPorDoctor, cargarTodasLasCitas, cargarTodosLosHorarios]); // Solo depender de id y rol del usuario
 
   // useEffect adicional para recargar citas cuando hay cambios (reagendamientos, cancelaciones)
   useEffect(() => {

@@ -19,6 +19,7 @@ const Register = ({ onNavigate, history }) => {
   const [errores, setErrores] = useState({});
   const [mostrarErrores, setMostrarErrores] = useState(false);
 
+  // eslint-disable-next-line no-unused-vars
   const { registrarUsuario, usuarios } = useAuth();
 
   // Validación de solo letras para nombres

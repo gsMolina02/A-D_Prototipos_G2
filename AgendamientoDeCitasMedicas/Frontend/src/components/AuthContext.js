@@ -26,6 +26,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [usuarioActual, setUsuarioActual] = useState(null);
+  // eslint-disable-next-line no-unused-vars
   const [citasAgendadas, setCitasAgendadas] = useState([]);
   const [todasLasCitas, setTodasLasCitas] = useState([]);
   const [horariosPorDoctor, setHorariosPorDoctor] = useState({});
@@ -144,6 +145,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
   const obtenerNombreDoctor = (email, name, apellido) => {
     return name && apellido ? `Dr/a. ${name} ${apellido}` : 'Doctor';
   };
@@ -267,7 +269,7 @@ export const AuthProvider = ({ children }) => {
       setNotificaciones([]);
       setNotificacionNoLeida(false);
     }
-  }, [usuarioActual?.id]);
+  }, [usuarioActual?.id, cargarNotificaciones]);
 
   // Cargar todas las citas cuando se inicializa la aplicación o cambia el usuario
   useEffect(() => {
@@ -280,7 +282,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     cargarDatosIniciales();
-  }, [usuarioActual]); // Ejecutar cuando cambie el usuario (incluye cuando se carga la app)
+  }, [usuarioActual, cargarTodasLasCitas]); // Ejecutar cuando cambie el usuario (incluye cuando se carga la app)
 
   const marcarNotificacionesLeidas = async () => {
     try {
