@@ -23,11 +23,6 @@
       "dest": "Frontend/build/index.html"
     }
   ],
-  "functions": {
-    "Backend/src/server.js": {
-      "maxDuration": 30
-    }
-  },
   "env": {
     "NODE_ENV": "production",
     "DISABLE_ESLINT_PLUGIN": "true",
