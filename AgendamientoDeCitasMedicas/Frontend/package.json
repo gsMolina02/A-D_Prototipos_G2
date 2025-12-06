@@ -18,7 +18,12 @@
     "build": "react-scripts build",
     "vercel-build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint \"src/**/*.{js,jsx}\"",
+    "lint:checkstyle": "eslint \"src/**/*.{js,jsx}\" -f checkstyle -o reports/eslint-frontend-checkstyle.xml",
+    "lint:json": "eslint \"src/**/*.{js,jsx}\" -f json -o reports/eslint-frontend.json",
+    "lint:html": "eslint \"src/**/*.{js,jsx}\" -f node_modules/eslint-formatter-html -o reports/eslint-frontend.html",
+    "lint:sarif": "eslint \"src/**/*.{js,jsx}\" -f node_modules/eslint-formatter-sarif -o reports/eslint-frontend.sarif"
   },
   "eslintConfig": {
     "extends": [
@@ -46,6 +51,13 @@
     "@testing-library/user-event": "^14.6.1",
     "axios-mock-adapter": "^2.1.0",
     "babel-jest": "^30.0.5",
+    "eslint": "^8.57.1",
+    "eslint-formatter-html": "^2.7.3",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-security": "^3.0.1",
+    "eslint-plugin-unicorn": "^62.0.0",
     "jest": "^27.5.1"
   }
 }
