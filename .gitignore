@@ -1,2 +1,24 @@
+# Environment variables
 AgendamientoDeCitasMedicas/Backend/.env
 AgendamientoDeCitasMedicas/Backend/src/.env
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+AgendamientoDeCitasMedicas/Backend/node_modules/
+AgendamientoDeCitasMedicas/Frontend/node_modules/
+
+# Build outputs
+AgendamientoDeCitasMedicas/Frontend/build/
+dist/
+*.log
+
+# Archivos de métricas y reportes generados
+AgendamientoDeCitasMedicas/estado_metricas_*.html
+AgendamientoDeCitasMedicas/estado_metricas_*.docx
+
+# Reports
+AgendamientoDeCitasMedicas/Backend/reports/
+AgendamientoDeCitasMedicas/Frontend/reports/
