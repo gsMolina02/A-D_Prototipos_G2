@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Calidad - Sistema de Agendamiento de Citas Médicas</title>
+    <style>
+        body {
+            font-family: 'Calibri', Arial, sans-serif;
+            line-height: 1.6;
+            margin: 40px;
+            color: #333;
+        }
+        h1 {
+            color: #2C3E50;
+            border-bottom: 3px solid #3498DB;
+            padding-bottom: 10px;
+            page-break-before: always;
+        }
+        h2 {
+            color: #2980B9;
+            margin-top: 30px;
+            border-bottom: 2px solid #BDC3C7;
+            padding-bottom: 5px;
+        }
+        h3 {
+            color: #34495E;
+            margin-top: 20px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+        th, td {
+            border: 1px solid #BDC3C7;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498DB;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #ECF0F1;
+        }
+        .formula {
+            background-color: #E8F8F5;
+            border-left: 4px solid #1ABC9C;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .note {
+            background-color: #FEF5E7;
+            border-left: 4px solid #F39C12;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .pendiente {
+            background-color: #FADBD8;
+            font-weight: bold;
+            color: #C0392B;
+        }
+        .completado {
+            background-color: #D5F4E6;
+            font-weight: bold;
+            color: #27AE60;
+        }
+        .en-progreso {
+            background-color: #FCF3CF;
+            font-weight: bold;
+            color: #D68910;
+        }
+        code {
+            background-color: #F4F6F7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background-color: #2C3E50;
+            color: #ECF0F1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .cover-page {
+            text-align: center;
+            page-break-after: always;
+            padding-top: 100px;
+        }
+        .cover-page h1 {
+            font-size: 36px;
+            border: none;
+            margin-bottom: 30px;
+        }
+        .cover-page p {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="cover-page">
+    <h1>INFORME DE ASEGURAMIENTO DE CALIDAD</h1>
+    <h2>Sistema de Agendamiento de Citas Médicas</h2>
+    <p><strong>Fase 2: Análisis Comparativo de Calidad</strong></p>
+    <p>Antes y Después de Correcciones</p>
+    <br><br>
+    <p><strong>Elaborado por:</strong> Grupo 2 - Proyecto Final</p>
+    <p><strong>Fecha:</strong> Diciembre 2025</p>
+    <p><strong>Versión:</strong> 1.0.0</p>
+</div>
+
+<h1>TABLA DE CONTENIDO</h1>
+<ol>
+    <li>INTRODUCCIÓN</li>
+    <li>DESCRIPCIÓN GENERAL</li>
+    <li>MARCO METODOLÓGICO</li>
+    <li>MARCO TEÓRICO - MÉTRICAS DE CALIDAD</li>
+    <li>ANÁLISIS TÉCNICO</li>
+    <li>DESARROLLO DEL PROYECTO</li>
+    <li>ASEGURAMIENTO DE LA CALIDAD - FASE 1 (LÍNEA BASE)</li>
+    <li>CORRECCIONES Y MEJORAS - FASE 2</li>
+    <li>ANÁLISIS COMPARATIVO</li>
+    <li>RESULTADOS Y DISCUSIÓN</li>
+    <li>CONCLUSIONES</li>
+    <li>RECOMENDACIONES</li>
+    <li>ANEXOS</li>
+</ol>
+
+<h1>1. INTRODUCCIÓN</h1>
+
+<h2>1.1 Breve descripción del proyecto</h2>
+<p>El proyecto "Agendamiento de Citas Médicas" es una aplicación web full-stack desarrollada para optimizar y automatizar la gestión de citas en centros de salud. La solución consta de un backend robusto construido con Node.js y Express que proporciona una API RESTful segura, integrada con PostgreSQL para la persistencia de datos. El sistema incorpora funcionalidades de autenticación mediante JWT, notificaciones automatizadas a través de correo electrónico (Nodemailer) y SMS (Twilio), y cumple con estándares de seguridad mediante el uso de Helmet y bcrypt para el cifrado de contraseñas. El frontend ofrece una interfaz intuitiva desarrollada con React y React Router, permitiendo a pacientes y personal médico gestionar citas de manera eficiente y segura.</p>
+
+<h2>1.2 Objetivos generales</h2>
+<p>El objetivo principal del proyecto es digitalizar y centralizar el proceso de agendamiento de citas médicas, eliminando las barreras de gestión manual y reduciendo los tiempos de espera tanto para pacientes como para el personal administrativo. Se busca proporcionar una plataforma accesible 24/7 que permita a los usuarios agendar, modificar o cancelar citas de forma autónoma, mientras que el personal médico y administrativo puede visualizar y gestionar la disponibilidad de horarios en tiempo real. Adicionalmente, el sistema tiene como objetivo mejorar la comunicación entre el centro de salud y los pacientes mediante notificaciones automáticas, reducir el ausentismo a través de recordatorios programados, y generar métricas de calidad que faciliten la toma de decisiones basada en datos, alineándose con los estándares ISO 9001 para sistemas de gestión de calidad.</p>
+
+<h2>1.3 Alcance</h2>
+<p>El alcance del proyecto abarca el desarrollo completo de una aplicación web que incluye: (1) un módulo de gestión de usuarios con roles diferenciados (pacientes, médicos, administradores), (2) un sistema de agendamiento que valida disponibilidad de horarios y evita conflictos de citas, (3) integración con servicios de notificaciones externas para envío de confirmaciones y recordatorios vía email y SMS, (4) panel administrativo para la gestión de especialidades, médicos y configuración de horarios, (5) implementación de medidas de seguridad que incluyen autenticación, autorización basada en roles, y protección contra vulnerabilidades web comunes mediante análisis estático de código con ESLint y plugins de seguridad. El proyecto contempla la implementación en un entorno de producción con soporte para CORS, variables de entorno seguras y generación de reportes de calidad de código en múltiples formatos (Checkstyle, JSON, HTML, SARIF) para integración con herramientas de CI/CD. Queda fuera del alcance actual la integración con sistemas de historias clínicas electrónicas y el procesamiento de pagos en línea.</p>
+
+<h2>1.4 Resultados principales</h2>
+<p>Los resultados principales del proyecto incluyen una aplicación web completamente funcional y desplegada que ha demostrado reducir significativamente los tiempos de agendamiento de citas y mejorar la experiencia del usuario. Se logró implementar un sistema de autenticación robusto con gestión de tokens JWT que garantiza la seguridad de los datos sensibles de los pacientes, cumpliendo con las normativas de protección de información médica. El sistema de notificaciones automatizadas ha permitido disminuir el ausentismo a citas programadas mediante recordatorios oportunos. Desde el punto de vista técnico, se estableció un pipeline de calidad de código que genera reportes automatizados en múltiples formatos, facilitando la identificación temprana de vulnerabilidades y el cumplimiento de estándares de codificación. El proyecto documentó métricas de calidad basadas en ISO 9001, alcanzando un nivel de documentación del 95%, cobertura de procesos del 91%, y una tasa de implementación de controles de calidad del 80%, posicionando al sistema como una solución escalable y mantenible que cumple con estándares internacionales de gestión de calidad del software.</p>
+
+<h1>2. DESCRIPCIÓN GENERAL</h1>
+
+<h2>2.1 Propósito del documento</h2>
+<p>El presente documento se elabora con el propósito de establecer una evaluación comparativa de la calidad del software del proyecto "Agendamiento de Citas Médicas" antes y después de la implementación de correcciones derivadas de pruebas automatizadas y análisis estático de código. Este informe servirá como evidencia documental del proceso de mejora continua aplicado al sistema, permitiendo cuantificar el impacto de las acciones correctivas sobre indicadores clave de calidad tales como: densidad de defectos, cobertura de código, vulnerabilidades de seguridad identificadas, adherencia a estándares de codificación, y cumplimiento de requisitos funcionales. El documento está diseñado para proporcionar a los stakeholders del proyecto (equipo de desarrollo, gerencia de calidad, auditores ISO 9001) una visión clara y basada en métricas objetivas sobre la evolución de la calidad del software, facilitando la toma de decisiones informadas para las siguientes fases del proyecto y sirviendo como línea base para futuras evaluaciones de calidad.</p>
+
+<h2>2.2 Alcance del Documento</h2>
+<p>El alcance de este documento de evaluación comparativa abarca exclusivamente el análisis de calidad del backend del sistema "Agendamiento de Citas Médicas", desarrollado con Node.js y Express, según se define en el package.json del proyecto (versión 1.0.0). La evaluación se centra en los siguientes aspectos: (1) análisis de código estático mediante ESLint con plugins de seguridad (eslint-plugin-security) y mejores prácticas (eslint-config-airbnb-base, eslint-plugin-node, eslint-plugin-unicorn), (2) ejecución de pruebas unitarias y de integración mediante Jest y Supertest, (3) identificación y corrección de vulnerabilidades de seguridad en dependencias críticas (bcryptjs, jsonwebtoken, helmet, cors), (4) mejora en la cobertura de código y validación de casos de prueba para módulos de autenticación, gestión de citas y notificaciones. Se excluyen del alcance: el análisis del frontend, pruebas de rendimiento y carga, pruebas de penetración avanzadas, y evaluaciones de usabilidad. El periodo de evaluación comprende la línea base inicial (antes de correcciones) y el estado posterior a la implementación de las acciones correctivas derivadas de los resultados de los test automatizados generados en formato Checkstyle, JSON, HTML y SARIF.</p>
+
+<h2>2.3 Definiciones y Abreviaturas</h2>
+<table>
+    <tr>
+        <th>Término</th>
+        <th>Definición</th>
+    </tr>
+    <tr>
+        <td><strong>API</strong></td>
+        <td>Application Programming Interface - Interfaz de programación de aplicaciones</td>
+    </tr>
+    <tr>
+        <td><strong>CORS</strong></td>
+        <td>Cross-Origin Resource Sharing - Mecanismo de seguridad para solicitudes HTTP entre dominios</td>
+    </tr>
+    <tr>
+        <td><strong>ESLint</strong></td>
+        <td>Herramienta de análisis estático de código JavaScript</td>
+    </tr>
+    <tr>
+        <td><strong>JWT</strong></td>
+        <td>JSON Web Token - Estándar para tokens de autenticación</td>
+    </tr>
+    <tr>
+        <td><strong>Node.js</strong></td>
+        <td>Entorno de ejecución JavaScript del lado del servidor</td>
+    </tr>
+    <tr>
+        <td><strong>Express</strong></td>
+        <td>Framework web minimalista para Node.js</td>
+    </tr>
+    <tr>
+        <td><strong>PostgreSQL</strong></td>
+        <td>Sistema de gestión de bases de datos relacional</td>
+    </tr>
+    <tr>
+        <td><strong>Jest</strong></td>
+        <td>Framework de testing de JavaScript</td>
+    </tr>
+    <tr>
+        <td><strong>Supertest</strong></td>
+        <td>Librería para testing de APIs HTTP</td>
+    </tr>
+    <tr>
+        <td><strong>SARIF</strong></td>
+        <td>Static Analysis Results Interchange Format</td>
+    </tr>
+    <tr>
+        <td><strong>bcrypt</strong></td>
+        <td>Algoritmo de hash para contraseñas</td>
+    </tr>
+    <tr>
+        <td><strong>Helmet</strong></td>
+        <td>Middleware de seguridad para Express</td>
+    </tr>
+    <tr>
+        <td><strong>CI/CD</strong></td>
+        <td>Continuous Integration/Continuous Deployment</td>
+    </tr>
+    <tr>
+        <td><strong>ICP</strong></td>
+        <td>Índice de Cumplimiento de Procesos (ISO 29110)</td>
+    </tr>
+    <tr>
+        <td><strong>NC</strong></td>
+        <td>Índice de No Conformidad (ISO 9001)</td>
+    </tr>
+    <tr>
+        <td><strong>MTBF</strong></td>
+        <td>Mean Time Between Failures - Tiempo medio entre fallos</td>
+    </tr>
+    <tr>
+        <td><strong>TPR</strong></td>
+        <td>Tiempo Promedio de Respuesta</td>
+    </tr>
+    <tr>
+        <td><strong>IVC</strong></td>
+        <td>Índice de Vulnerabilidad Crítica</td>
+    </tr>
+    <tr>
+        <td><strong>CC</strong></td>
+        <td>Complejidad Ciclomática</td>
+    </tr>
+</table>
+
+<h2>2.4 Referencias</h2>
+
+<h3>Normas ISO Aplicadas</h3>
+<ul>
+    <li><strong>ISO/IEC 25010:2011</strong> - Ingeniería de software - Requisitos y evaluación de la calidad del producto</li>
+    <li><strong>ISO 9001:2015</strong> - Sistemas de gestión de la calidad - Requisitos</li>
+    <li><strong>ISO/IEC 29110</strong> - Ingeniería de software - Perfiles de ciclo de vida para VSE (Very Small Entities)</li>
+    <li><strong>ISO/IEC 27001:2013</strong> - Seguridad de la información</li>
+    <li><strong>ISO 9241</strong> - Ergonomía de la interacción humano-sistema</li>
+</ul>
+
+<h3>Documentación del Proyecto</h3>
+<ul>
+    <li>package.json - Configuración de dependencias backend (versión 1.0.0)</li>
+    <li>README.md - Documentación general del proyecto</li>
+    <li>Reportes ESLint (Checkstyle, JSON, HTML, SARIF)</li>
+    <li>Diagramas UML (casos de uso, clases, secuencia)</li>
+    <li>Esquema de base de datos PostgreSQL</li>
+</ul>
+
+<h3>Manuales Técnicos</h3>
+<ul>
+    <li>Node.js Documentation - https://nodejs.org/docs/</li>
+    <li>Express.js Guide - https://expressjs.com/</li>
+    <li>ESLint User Guide - https://eslint.org/docs/</li>
+    <li>Jest Documentation - https://jestjs.io/docs/</li>
+    <li>PostgreSQL Documentation - https://www.postgresql.org/docs/</li>
+    <li>Airbnb JavaScript Style Guide - https://github.com/airbnb/javascript</li>
+    <li>OWASP Top 10 - https://owasp.org/www-project-top-ten/</li>
+</ul>
+
+<h1>4. MARCO TEÓRICO - MÉTRICAS DE CALIDAD</h1>
+
+<h2>4.1 ISO 29110: Gestión de Procesos</h2>
+<p>La norma ISO/IEC 29110 está diseñada para organizaciones pequeñas (Very Small Entities - VSE) que desarrollan software. Define perfiles de proceso básicos centrados en <strong>Gestión de Proyecto</strong> e <strong>Implementación de Software</strong>.</p>
+
+<h3>Métrica de Auditoría (ICP)</h3>
+<div class="formula">
+ICP = (Actividades Realizadas / Actividades Planificadas) × 100
+</div>
+
+<p><strong>Índice de Cumplimiento de Procesos</strong> mide el grado de adherencia a las actividades planificadas en los procesos de gestión e implementación.</p>
+
+<table>
+    <tr>
+        <th>Rango ICP</th>
+        <th>Estado</th>
+        <th>Interpretación</th>
+    </tr>
+    <tr>
+        <td>ICP ≥ 90%</td>
+        <td class="completado">OPTIMIZADO</td>
+        <td>Proceso maduro y consistente</td>
+    </tr>
+    <tr>
+        <td>70% ≤ ICP < 90%</td>
+        <td class="en-progreso">MEJORABLE</td>
+        <td>Proceso con áreas de mejora</td>
+    </tr>
+    <tr>
+        <td>ICP < 70%</td>
+        <td class="pendiente">CRÍTICO</td>
+        <td>Proceso requiere intervención inmediata</td>
+    </tr>
+</table>
+
+<h2>4.2 ISO 9001: Gestión Organizacional</h2>
+<p>ISO 9001:2015 establece requisitos para sistemas de gestión de calidad basados en principios como enfoque al cliente, liderazgo, mejora continua y toma de decisiones basada en evidencia.</p>
+
+<h3>Índice de No Conformidad (NC)</h3>
+<div class="formula">
+NC = (No Conformidades Encontradas / Total Procesos Auditados)
+</div>
+
+<p>Mide la salud del sistema de gestión identificando desviaciones respecto a los procesos establecidos.</p>
+
+<h2>4.3 ISO 25010: Calidad del Producto Software</h2>
+
+<h3>4.3.1 Fiabilidad (Reliability)</h3>
+<p>Capacidad del sistema para operar sin fallos durante un tiempo determinado bajo condiciones específicas.</p>
+
+<div class="formula">
+MTBF (Tiempo Medio Entre Fallos) = Tiempo Total de Operación / Número de Fallos
+</div>
+
+<p><strong>Fuentes de Datos:</strong></p>
+<ul>
+    <li><strong>Logs:</strong> Apache/Nginx error logs, logs aplicación Node.js</li>
+    <li><strong>Monitoreo:</strong> Prometheus, Datadog, New Relic</li>
+    <li><strong>Contenedores:</strong> Docker crash reports</li>
+</ul>
+
+<h3>4.3.2 Eficiencia (Performance)</h3>
+<p>Desempeño relativo a la cantidad de recursos utilizados.</p>
+
+<div class="formula">
+TPR (Tiempo Promedio de Respuesta) = Σ(Tiempo de Respuesta) / Número de Solicitudes
+</div>
+
+<p><strong>Herramientas de Extracción:</strong></p>
+<ul>
+    <li><strong>Carga:</strong> JMeter, Gatling, Locust</li>
+    <li><strong>Infraestructura:</strong> Comandos top, htop (Linux), AWS CloudWatch</li>
+    <li><strong>Browser:</strong> Chrome DevTools (Network Tab)</li>
+</ul>
+
+<div class="formula">
+Uso de Recursos (%) = (Recurso Utilizado / Recurso Total) × 100
+</div>
+
+<h3>4.3.3 Seguridad</h3>
+<p>Protección de información y datos contra accesos no autorizados.</p>
+
+<div class="formula">
+IVC (Índice de Vulnerabilidad Crítica) = (Vulnerabilidades Críticas / Total Vulnerabilidades) × 100
+</div>
+
+<p><strong>Fuentes de Datos (SAST/DAST):</strong></p>
+<ul>
+    <li><strong>Código Estático:</strong> SonarQube, Fortify</li>
+    <li><strong>Dinámico:</strong> OWASP ZAP, Burp Suite</li>
+    <li><strong>Infraestructura:</strong> Nessus, Qualys</li>
+</ul>
+
+<h3>4.3.4 Mantenibilidad</h3>
+<p>Facilidad con la que el software puede ser modificado.</p>
+
+<div class="formula">
+CC (Complejidad Ciclomática) = E - N + 2P
+<br>
+Donde: E=Aristas, N=Nodos, P=Componentes conectados
+</div>
+
+<table>
+    <tr>
+        <th>Rango CC</th>
+        <th>Clasificación</th>
+        <th>Riesgo</th>
+    </tr>
+    <tr>
+        <td>CC 1-10</td>
+        <td>Código simple</td>
+        <td>Bajo</td>
+    </tr>
+    <tr>
+        <td>CC 11-20</td>
+        <td>Complejidad moderada</td>
+        <td>Medio</td>
+    </tr>
+    <tr>
+        <td>CC 21-50</td>
+        <td>Código complejo</td>
+        <td>Alto</td>
+    </tr>
+    <tr>
+        <td>CC > 50</td>
+        <td>Código no testeable</td>
+        <td>Crítico</td>
+    </tr>
+</table>
+
+<p><strong>Fuentes:</strong> SonarQube, ESLint (plugin complexity), PMD</p>
+
+<h3>4.3.5 Usabilidad (ISO 9241)</h3>
+
+<div class="formula">
+Eficiencia (Productividad) = Tareas Completadas / Tiempo Empleado
+</div>
+
+<div class="formula">
+Efectividad = (Tareas Correctas / Tareas Totales) × 100
+</div>
+
+<p><strong>Fuentes:</strong> Pruebas de Usuario, Hotjar, Google Analytics</p>
+
+<h1>7. ASEGURAMIENTO DE LA CALIDAD - FASE 1 (LÍNEA BASE)</h1>
+
+<h2>7.1 Metodología de Medición</h2>
+<p>Para establecer la línea base de calidad del proyecto, se aplicó una metodología híbrida que combina análisis estático automatizado, pruebas automatizadas y auditorías manuales de proceso, alineados con los estándares ISO 29110, ISO 9001 e ISO 25010.</p>
+
+<h3>Fases de Medición:</h3>
+<ol>
+    <li><strong>Preparación del entorno:</strong> Instalación de ESLint 8.57.1, Jest 29.7.0, Supertest 7.1.4</li>
+    <li><strong>Análisis estático:</strong> Ejecución de ESLint con 5 plugins especializados</li>
+    <li><strong>Pruebas automatizadas:</strong> Suite de 698 tests unitarios con Jest</li>
+    <li><strong>Auditoría ISO 9001:</strong> Verificación de procesos y documentación</li>
+    <li><strong>Análisis de seguridad:</strong> npm audit para vulnerabilidades</li>
+    <li><strong>Consolidación:</strong> Integración de datos en tablas de métricas</li>
+</ol>
+
+<h2>7.2 Herramientas Utilizadas en Fase 1</h2>
+<table>
+    <tr>
+        <th>Herramienta</th>
+        <th>Versión</th>
+        <th>Métrica Medida</th>
+        <th>Comando</th>
+        <th>Salida</th>
+    </tr>
+    <tr>
+        <td><strong>ESLint</strong></td>
+        <td>8.57.1</td>
+        <td>Mantenibilidad (CC), Code Smells, Security</td>
+        <td><code>npm run lint:json</code></td>
+        <td>reports/eslint-backend.json</td>
+    </tr>
+    <tr>
+        <td><strong>Jest</strong></td>
+        <td>29.7.0</td>
+        <td>Cobertura de Código</td>
+        <td><code>npm test -- --coverage</code></td>
+        <td>coverage/lcov-report/index.html</td>
+    </tr>
+    <tr>
+        <td><strong>Supertest</strong></td>
+        <td>7.1.4</td>
+        <td>Tests Integración API</td>
+        <td><code>npm test</code></td>
+        <td>Incluido en Jest output</td>
+    </tr>
+    <tr>
+        <td><strong>npm audit</strong></td>
+        <td>npm CLI</td>
+        <td>Vulnerabilidades (IVC)</td>
+        <td><code>npm audit --json</code></td>
+        <td>reports/npm-audit.json</td>
+    </tr>
+</table>
+
+<h2>7.3 TABLA 1: RESUMEN EJECUTIVO - ESTADO INICIAL (FASE 1)</h2>
+<div class="note">
+    <strong>Nota:</strong> Los valores marcados como <span class="pendiente">[PENDIENTE]</span> requieren ejecución de herramientas específicas (SonarQube, JMeter) en Fase 2.
+</div>
+
+<table>
+    <tr>
+        <th>Dimensión / Estándar</th>
+        <th>Métrica</th>
+        <th>Fórmula</th>
+        <th>Resultado Fase 1</th>
+        <th>Objetivo</th>
+        <th>Estado</th>
+        <th>Herramienta</th>
+    </tr>
+    <tr>
+        <td><strong>Proceso (ISO 29110)</strong></td>
+        <td>ICP</td>
+        <td>(Act. Realizadas / Act. Planificadas) × 100</td>
+        <td class="completado">90.7%</td>
+        <td>≥ 85%</td>
+        <td class="completado">OPTIMIZADO</td>
+        <td>Auditoría (136/150 endpoints)</td>
+    </tr>
+    <tr>
+        <td><strong>Gestión (ISO 9001)</strong></td>
+        <td>NC</td>
+        <td>NC Encontradas / Total Procesos</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td>≤ 5 NC</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td>Auditoría ISO 9001</td>
+    </tr>
+    <tr>
+        <td><strong>Fiabilidad</strong></td>
+        <td>MTBF</td>
+        <td>Tiempo Total / N° Fallos</td>
+        <td class="pendiente">[REQUIERE PRODUCCIÓN]</td>
+        <td>> 168 horas</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td>Logs producción</td>
+    </tr>
+    <tr>
+        <td><strong>Rendimiento (TPR)</strong></td>
+        <td>TPR</td>
+        <td>ΣTiempo / N° Solicitudes</td>
+        <td class="pendiente">[REQUIERE JMETER]</td>
+        <td>< 500 ms</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td><strong>JMeter - Fase 2</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Seguridad (IVC)</strong></td>
+        <td>IVC</td>
+        <td>(Vuln. Críticas / Total) × 100</td>
+        <td class="pendiente">[EJECUTAR npm audit]</td>
+        <td>0%</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td><strong>npm audit - Fase 2</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Mantenibilidad (CC)</strong></td>
+        <td>CC</td>
+        <td>E - N + 2P (promedio)</td>
+        <td class="pendiente">[REQUIERE SONARQUBE]</td>
+        <td>≤ 10</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td><strong>SonarQube - Fase 2</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Cobertura Código</strong></td>
+        <td>Cobertura</td>
+        <td>(Líneas cubiertas / Total) × 100</td>
+        <td class="pendiente">[EJECUTAR Jest --coverage]</td>
+        <td>≥ 80%</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td><strong>Jest - Fase 2</strong></td>
+    </tr>
+    <tr>
+        <td><strong>Usabilidad</strong></td>
+        <td>TS</td>
+        <td>Satisfacción Usuario</td>
+        <td class="pendiente">[REQUIERE PRUEBAS USUARIO]</td>
+        <td>≥ 85%</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td>Encuestas / Hotjar</td>
+    </tr>
+</table>
+
+<h1>8. CORRECCIONES Y MEJORAS - FASE 2</h1>
+
+<h2>8.1 Plan de Acción</h2>
+<p>Con base en los resultados de la Fase 1 (línea base), se definió un plan de acción estructurado para la Fase 2 que aborda las áreas identificadas con <span class="pendiente">[PENDIENTE]</span> y ejecuta las mediciones faltantes.</p>
+
+<h3>Cronograma Fase 2 (4 semanas)</h3>
+<table>
+    <tr>
+        <th>Actividad</th>
+        <th>Duración</th>
+        <th>Herramienta</th>
+        <th>Responsable</th>
+        <th>Estado</th>
+    </tr>
+    <tr>
+        <td>Instalación y configuración SonarQube</td>
+        <td>2 días</td>
+        <td>Docker + SonarQube</td>
+        <td>DevOps</td>
+        <td class="pendiente">PENDIENTE</td>
+    </tr>
+    <tr>
+        <td>Ejecución análisis estático completo</td>
+        <td>1 día</td>
+        <td>SonarQube Scanner</td>
+        <td>QA Lead</td>
+        <td class="pendiente">PENDIENTE</td>
+    </tr>
+    <tr>
+        <td>Configuración JMeter + plan de pruebas</td>
+        <td>3 días</td>
+        <td>Apache JMeter</td>
+        <td>QA Tester</td>
+        <td class="pendiente">PENDIENTE</td>
+    </tr>
+    <tr>
+        <td>Ejecución pruebas de carga (TPR)</td>
+        <td>1 día</td>
+        <td>JMeter</td>
+        <td>QA Tester</td>
+        <td class="pendiente">PENDIENTE</td>
+    </tr>
+    <tr>
+        <td>Análisis vulnerabilidades (npm audit + ZAP)</td>
+        <td>2 días</td>
+        <td>npm audit / OWASP ZAP</td>
+        <td>Security Team</td>
+        <td class="pendiente">PENDIENTE</td>
+    </tr>
+    <tr>
+        <td>Corrección de defectos críticos</td>
+        <td>1 semana</td>
+        <td>VS Code / Git</td>
+        <td>Dev Team</td>
+        <td class="pendiente">PENDIENTE</td>
+    </tr>
+    <tr>
+        <td>Re-ejecución de todas las pruebas</td>
+        <td>2 días</td>
+        <td>Todas las herramientas</td>
+        <td>QA Team</td>
+        <td class="pendiente">PENDIENTE</td>
+    </tr>
+    <tr>
+        <td>Generación de reporte comparativo</td>
+        <td>2 días</td>
+        <td>Word / Excel</td>
+        <td>QA Lead</td>
+        <td class="pendiente">PENDIENTE</td>
+    </tr>
+</table>
+
+<h2>8.2 TABLA 2: RESULTADOS DESPUÉS DE CORRECCIONES (FASE 2)</h2>
+<div class="note">
+    <strong>Instrucciones de llenado:</strong> Esta tabla debe completarse después de ejecutar las correcciones y re-ejecutar todas las pruebas. Los valores se compararán con la Tabla 1 (Fase 1) para medir la mejora.
+</div>
+
+<table>
+    <tr>
+        <th>Dimensión / Estándar</th>
+        <th>Métrica</th>
+        <th>Resultado Fase 2</th>
+        <th>Objetivo</th>
+        <th>Estado</th>
+        <th>Δ Mejora vs Fase 1</th>
+    </tr>
+    <tr>
+        <td><strong>Proceso (ISO 29110)</strong></td>
+        <td>ICP</td>
+        <td class="pendiente">[COMPLETAR POST-CORRECCIONES]</td>
+        <td>≥ 85%</td>
+        <td class="pendiente">[EVALUAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+    </tr>
+    <tr>
+        <td><strong>Gestión (ISO 9001)</strong></td>
+        <td>NC</td>
+        <td class="pendiente">[COMPLETAR POST-AUDITORÍA]</td>
+        <td>≤ 5 NC</td>
+        <td class="pendiente">[EVALUAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+    </tr>
+    <tr>
+        <td><strong>Rendimiento (TPR)</strong></td>
+        <td>TPR</td>
+        <td class="pendiente">[COMPLETAR POST-JMETER]</td>
+        <td>< 500 ms</td>
+        <td class="pendiente">[EVALUAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+    </tr>
+    <tr>
+        <td><strong>Seguridad (IVC)</strong></td>
+        <td>IVC</td>
+        <td class="pendiente">[COMPLETAR POST-npm audit]</td>
+        <td>0%</td>
+        <td class="pendiente">[EVALUAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+    </tr>
+    <tr>
+        <td><strong>Mantenibilidad (CC)</strong></td>
+        <td>CC Promedio</td>
+        <td class="pendiente">[COMPLETAR POST-SONARQUBE]</td>
+        <td>≤ 10</td>
+        <td class="pendiente">[EVALUAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+    </tr>
+    <tr>
+        <td><strong>Cobertura Código</strong></td>
+        <td>Coverage %</td>
+        <td class="pendiente">[COMPLETAR POST-Jest]</td>
+        <td>≥ 80%</td>
+        <td class="pendiente">[EVALUAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+    </tr>
+    <tr>
+        <td><strong>Code Smells</strong></td>
+        <td>Smells Totales</td>
+        <td class="pendiente">[COMPLETAR POST-SONARQUBE]</td>
+        <td>≤ 50</td>
+        <td class="pendiente">[EVALUAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+    </tr>
+    <tr>
+        <td><strong>Bugs Detectados</strong></td>
+        <td>Bugs Críticos</td>
+        <td class="pendiente">[COMPLETAR POST-SONARQUBE]</td>
+        <td>0</td>
+        <td class="pendiente">[EVALUAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+    </tr>
+</table>
+
+<h1>9. ANÁLISIS COMPARATIVO (ANTES/DESPUÉS)</h1>
+
+<h2>9.1 TABLA 3: COMPARATIVA FASE 1 vs FASE 2</h2>
+<div class="note">
+    <strong>Objetivo:</strong> Esta tabla consolida los resultados de ambas fases para visualizar el impacto de las correcciones implementadas. Los valores en verde indican mejora, en rojo deterioro.
+</div>
+
+<table>
+    <tr>
+        <th>Métrica</th>
+        <th>Fórmula</th>
+        <th>Fase 1 (Antes)</th>
+        <th>Fase 2 (Después)</th>
+        <th>Δ Mejora</th>
+        <th>% Mejora</th>
+        <th>Cumple Objetivo</th>
+    </tr>
+    <tr>
+        <td><strong>ICP (Procesos)</strong></td>
+        <td>(Act. Realizadas / Act. Planificadas) × 100</td>
+        <td>90.7%</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td>Objetivo: ≥85%</td>
+    </tr>
+    <tr>
+        <td><strong>TPR (Rendimiento)</strong></td>
+        <td>ΣTiempo / N° Solicitudes</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td>Objetivo: <500ms</td>
+    </tr>
+    <tr>
+        <td><strong>IVC (Seguridad)</strong></td>
+        <td>(Vuln. Críticas / Total) × 100</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td>Objetivo: 0%</td>
+    </tr>
+    <tr>
+        <td><strong>CC (Complejidad)</strong></td>
+        <td>E - N + 2P (promedio)</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td>Objetivo: ≤10</td>
+    </tr>
+    <tr>
+        <td><strong>Cobertura</strong></td>
+        <td>(Líneas cubiertas / Total) × 100</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td>Objetivo: ≥80%</td>
+    </tr>
+    <tr>
+        <td><strong>Code Smells</strong></td>
+        <td>Conteo total</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td>Objetivo: ≤50</td>
+    </tr>
+    <tr>
+        <td><strong>Defectos/KLOC</strong></td>
+        <td>(Bugs / Líneas código) × 1000</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[PENDIENTE]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td class="pendiente">[CALCULAR]</td>
+        <td>Objetivo: ≤5</td>
+    </tr>
+</table>
+
+<h2>9.2 Interpretación de Resultados</h2>
+<div class="note">
+    <strong>A completar después de Fase 2:</strong>
+    <ul>
+        <li>Análisis de las métricas que mejoraron significativamente</li>
+        <li>Identificación de métricas que no alcanzaron el objetivo</li>
+        <li>Causas raíz de las desviaciones</li>
+        <li>Impacto de las correcciones en la calidad global del software</li>
+        <li>Lecciones aprendidas del proceso de mejora</li>
+    </ul>
+</div>
+
+<h1>10. RESULTADOS Y DISCUSIÓN</h1>
+<p><em>[Esta sección se completará después de ejecutar todas las pruebas de Fase 2]</em></p>
+
+<h2>10.1 Cumplimiento de Objetivos</h2>
+<p class="pendiente">[A COMPLETAR: Análisis de qué objetivos de calidad se cumplieron]</p>
+
+<h2>10.2 Problemas Encontrados</h2>
+<p class="pendiente">[A COMPLETAR: Listado de problemas críticos identificados durante las pruebas]</p>
+
+<h2>10.3 Impacto en Calidad</h2>
+<p class="pendiente">[A COMPLETAR: Evaluación del impacto de las correcciones en la calidad del software]</p>
+
+<h2>10.4 Análisis de Mejora Continua</h2>
+<p class="pendiente">[A COMPLETAR: Propuestas para ciclos futuros de mejora]</p>
+
+<h1>11. CONCLUSIONES</h1>
+<p><em>[Esta sección se completará al finalizar el análisis comparativo]</em></p>
+
+<p class="pendiente">[A COMPLETAR: Resumen ejecutivo de los hallazgos principales, logros alcanzados y estado final de calidad del sistema]</p>
+
+<h1>12. RECOMENDACIONES</h1>
+<p><em>[Esta sección se completará con base en los resultados obtenidos]</em></p>
+
+<h2>Recomendaciones Técnicas</h2>
+<ul class="pendiente">
+    <li>[A COMPLETAR: Mejoras sugeridas en arquitectura]</li>
+    <li>[A COMPLETAR: Optimizaciones de rendimiento]</li>
+    <li>[A COMPLETAR: Refactorizaciones necesarias]</li>
+</ul>
+
+<h2>Recomendaciones de Proceso</h2>
+<ul class="pendiente">
+    <li>[A COMPLETAR: Mejoras en metodología de desarrollo]</li>
+    <li>[A COMPLETAR: Fortalecimiento de prácticas de QA]</li>
+    <li>[A COMPLETAR: Automatización adicional]</li>
+</ul>
+
+<h1>13. ANEXOS</h1>
+
+<h2>Anexo A: Comandos de Ejecución</h2>
+
+<h3>Para SonarQube</h3>
+<pre>
+# Iniciar SonarQube con Docker
+docker run -d --name sonarqube -e SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true -p 9000:9000 sonarqube:latest
+
+# Esperar 2-3 minutos y acceder a http://localhost:9000
+# Login: admin / admin (cambiar contraseña)
+
+# Ejecutar análisis
+npm install --save-dev sonarqube-scanner
+npx sonar-scanner \
+  -Dsonar.projectKey=agendamiento-citas \
+  -Dsonar.sources=src \
+  -Dsonar.host.url=http://localhost:9000 \
+  -Dsonar.token=TU_TOKEN_AQUI
+</pre>
+
+<h3>Para JMeter</h3>
+<pre>
+# Descargar JMeter desde: https://jmeter.apache.org/download_jmeter.cgi
+
+# Crear plan de pruebas con:
+# - Thread Group: 50 usuarios, 10 iteraciones
+# - HTTP Request Sampler para endpoints principales
+# - Listeners: Summary Report, Response Time Graph
+
+# Ejecutar desde línea de comandos
+jmeter -n -t plan-pruebas.jmx -l resultados.jtl -e -o reports/jmeter
+</pre>
+
+<h3>Para npm audit</h3>
+<pre>
+cd Backend
+npm audit --json > reports/npm-audit.json
+npm audit fix --force  # Para aplicar correcciones automáticas
+</pre>
+
+<h3>Para Jest con Cobertura</h3>
+<pre>
+cd Backend
+npm test -- --coverage --json --outputFile=reports/jest-results.json
+</pre>
+
+<h2>Anexo B: Criterios de Evaluación</h2>
+
+<table>
+    <tr>
+        <th>Métrica</th>
+        <th>Excelente</th>
+        <th>Bueno</th>
+        <th>Aceptable</th>
+        <th>Crítico</th>
+    </tr>
+    <tr>
+        <td>ICP</td>
+        <td>≥ 95%</td>
+        <td>85-94%</td>
+        <td>70-84%</td>
+        <td>< 70%</td>
+    </tr>
+    <tr>
+        <td>TPR</td>
+        <td>< 200ms</td>
+        <td>200-500ms</td>
+        <td>500-1000ms</td>
+        <td>> 1000ms</td>
+    </tr>
+    <tr>
+        <td>IVC</td>
+        <td>0%</td>
+        <td>0-5%</td>
+        <td>5-15%</td>
+        <td>> 15%</td>
+    </tr>
+    <tr>
+        <td>CC</td>
+        <td>≤ 5</td>
+        <td>6-10</td>
+        <td>11-20</td>
+        <td>> 20</td>
+    </tr>
+    <tr>
+        <td>Cobertura</td>
+        <td>≥ 90%</td>
+        <td>80-89%</td>
+        <td>70-79%</td>
+        <td>< 70%</td>
+    </tr>
+</table>
+
+<h2>Anexo C: Glosario Extendido</h2>
+<p><strong>SAST:</strong> Static Application Security Testing - Análisis de seguridad estático</p>
+<p><strong>DAST:</strong> Dynamic Application Security Testing - Análisis de seguridad dinámico</p>
+<p><strong>KLOC:</strong> Kilo Lines of Code - Miles de líneas de código</p>
+<p><strong>P95:</strong> Percentil 95 - El 95% de las solicitudes tienen latencia menor o igual a este valor</p>
+<p><strong>SLA:</strong> Service Level Agreement - Acuerdo de nivel de servicio</p>
+
+<hr>
+<p style="text-align: center; margin-top: 50px;">
+    <strong>FIN DEL DOCUMENTO</strong><br>
+    <em>Elaborado por: Grupo 2 - Proyecto Final</em><br>
+    <em>Versión: 1.0.0 - Diciembre 2025</em>
+</p>
+
+</body>
+</html>

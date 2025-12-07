@@ -5,11 +5,17 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
+    "test": "jest --forceExit --detectOpenHandles",
+    "test:coverage": "jest --coverage --forceExit --detectOpenHandles",
+    "test:verbose": "jest --verbose --forceExit --detectOpenHandles",
     "lint": "eslint \"**/*.js\"",
     "lint:checkstyle": "eslint \"**/*.js\" -f checkstyle -o reports/eslint-backend-checkstyle.xml",
     "lint:json": "eslint \"**/*.js\" -f json -o reports/eslint-backend.json",
     "lint:html": "eslint \"**/*.js\" -f node_modules/eslint-formatter-html -o reports/eslint-backend.html",
-    "lint:sarif": "eslint \"**/*.js\" -f node_modules/eslint-formatter-sarif -o reports/eslint-backend.sarif"
+    "lint:sarif": "eslint \"**/*.js\" -f node_modules/eslint-formatter-sarif -o reports/eslint-backend.sarif",
+    "lint:complexity": "eslint src/**/*.js --format json --output-file reports/complexity-report.json",
+    "audit:full": "npm audit --json > reports/audit-report.json",
+    "metrics": "node generate_metrics.js"
   },
   "dependencies": {
     "axios": "^1.10.0",
@@ -18,7 +24,7 @@
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
     "helmet": "^8.1.0",
-    "jsonwebtoken": "^8.5.1",
+    "jsonwebtoken": "^9.0.3",
     "nodemailer": "^7.0.5",
     "pg": "^8.7.1",
     "react-router-dom": "^7.6.2",
