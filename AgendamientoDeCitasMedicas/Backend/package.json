@@ -25,9 +25,10 @@
     "express": "^4.17.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
-    "nodemailer": "^7.0.5",
+    "nodemailer": "^7.0.13",
     "pg": "^8.7.1",
     "react-router-dom": "^7.6.2",
+    "stripe": "^20.3.0",
     "twilio": "^5.8.0"
   },
   "author": "Grupo 2 - Proyecto Final",

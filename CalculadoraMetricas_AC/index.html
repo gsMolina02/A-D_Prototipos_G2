@@ -1,0 +1,1828 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Métricas ISO 9001 - Sistema de Agendamiento de Citas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .metric-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .metric-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .metric-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .formula {
+            background: #e9ecef;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            color: #495057;
+            border-left: 4px solid #667eea;
+        }
+
+        .inputs-group {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.95em;
+        }
+
+        input[type="number"] {
+            padding: 10px 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        input[type="number"]:hover {
+            border-color: #adb5bd;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .result-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .result-value {
+            font-size: 2em;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .cumplimiento-box {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid;
+            display: none;
+        }
+
+        .cumplimiento-box.activo {
+            display: block;
+        }
+
+        .cumplimiento-box.excelente {
+            background: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .cumplimiento-box.bueno {
+            background: #d1ecf1;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+
+        .cumplimiento-box.aceptable {
+            background: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .cumplimiento-box.deficiente {
+            background: #f8d7da;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .cumplimiento-header {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cumplimiento-status {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-excelente {
+            background: #28a745;
+            box-shadow: 0 0 10px #28a745;
+        }
+
+        .status-bueno {
+            background: #17a2b8;
+            box-shadow: 0 0 10px #17a2b8;
+        }
+
+        .status-aceptable {
+            background: #ffc107;
+            box-shadow: 0 0 10px #ffc107;
+        }
+
+        .status-deficiente {
+            background: #dc3545;
+            box-shadow: 0 0 10px #dc3545;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .cumplimiento-detalle {
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+
+        .cumplimiento-porcentaje {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .progress-circle {
+            width: 80px;
+            height: 80px;
+            position: relative;
+            margin: 10px auto;
+        }
+
+        .progress-circle svg {
+            transform: rotate(-90deg);
+        }
+
+        .progress-circle-bg {
+            fill: none;
+            stroke: #e9ecef;
+            stroke-width: 8;
+        }
+
+        .progress-circle-fill {
+            fill: none;
+            stroke-width: 8;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s ease;
+        }
+
+        .progress-circle-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .dashboard-summary {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .dashboard-summary h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 2em;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .summary-card h3 {
+            font-size: 0.9em;
+            color: #6c757d;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .summary-card .value {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .bar-label {
+            min-width: 120px;
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #495057;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bar-fill {
+            height: 100%;
+            border-radius: 15px;
+            transition: width 1s ease, background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .bar-value {
+            min-width: 60px;
+            text-align: right;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        .source {
+            margin-top: 10px;
+            font-size: 0.85em;
+            color: #6c757d;
+            font-style: italic;
+            padding: 8px;
+            background: #fff3cd;
+            border-radius: 5px;
+            border-left: 3px solid #ffc107;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        .info-banner {
+            background: #d1ecf1;
+            border: 2px solid #bee5eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: #0c5460;
+        }
+
+        .info-banner h3 {
+            margin-bottom: 10px;
+            color: #0c5460;
+        }
+
+        .info-banner ul {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .input-row {
+                grid-template-columns: 1fr;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+
+        .empty-field {
+            border-color: #ffc107 !important;
+            background: #fff3cd !important;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            margin-left: 5px;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            white-space: nowrap;
+            font-size: 0.85em;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Calculadora de Métricas ISO 9001</h1>
+            <p>Sistema de Agendamiento de Citas Médicas - Análisis de Calidad</p>
+        </div>
+
+        <div class="content">
+            <div class="info-banner">
+                <h3>Información Importante</h3>
+                <ul>
+                    <li>Los campos con valores <strong>pre-cargados</strong> provienen de los reportes del proyecto</li>
+                    <li>Puedes <strong>modificar cualquier valor</strong> para hacer simulaciones</li>
+                    <li>Los campos vacíos se calcularán automáticamente al ingresar los datos necesarios</li>
+                    <li>Las fórmulas son basadas en estándares ISO 9001 y métricas de ingeniería de software</li>
+                </ul>
+            </div>
+
+            <!-- Dashboard de Resumen -->
+            <div class="dashboard-summary" id="dashboard">
+                <h2>Dashboard de Cumplimiento General</h2>
+                
+                <div class="summary-grid">
+                    <div class="summary-card">
+                        <h3>Métricas Calculadas</h3>
+                        <div class="progress-circle">
+                            <svg width="80" height="80">
+                                <circle class="progress-circle-bg" cx="40" cy="40" r="32"></circle>
+                                <circle class="progress-circle-fill" id="calc-circle" cx="40" cy="40" r="32" 
+                                    stroke="#667eea" stroke-dasharray="201" stroke-dashoffset="201"></circle>
+                            </svg>
+                            <div class="progress-circle-text" id="calc-text">0/10</div>
+                        </div>
+                        <div class="value" id="metricas-calculadas">0%</div>
+                    </div>
+
+                    <div class="summary-card">
+                        <h3>Cumplimiento Promedio</h3>
+                        <div class="progress-circle">
+                            <svg width="80" height="80">
+                                <circle class="progress-circle-bg" cx="40" cy="40" r="32"></circle>
+                                <circle class="progress-circle-fill" id="prom-circle" cx="40" cy="40" r="32" 
+                                    stroke="#28a745" stroke-dasharray="201" stroke-dashoffset="201"></circle>
+                            </svg>
+                            <div class="progress-circle-text" id="prom-text">0%</div>
+                        </div>
+                        <div class="value" style="color: #28a745;" id="cumplimiento-promedio">0%</div>
+                    </div>
+
+                    <div class="summary-card">
+                        <h3>Métricas Excelentes</h3>
+                        <div class="progress-circle">
+                            <svg width="80" height="80">
+                                <circle class="progress-circle-bg" cx="40" cy="40" r="32"></circle>
+                                <circle class="progress-circle-fill" id="exc-circle" cx="40" cy="40" r="32" 
+                                    stroke="#28a745" stroke-dasharray="201" stroke-dashoffset="201"></circle>
+                            </svg>
+                            <div class="progress-circle-text" id="exc-text">0</div>
+                        </div>
+                        <div class="value" style="color: #28a745;" id="metricas-excelentes">0</div>
+                    </div>
+
+                    <div class="summary-card">
+                        <h3>Métricas Deficientes</h3>
+                        <div class="progress-circle">
+                            <svg width="80" height="80">
+                                <circle class="progress-circle-bg" cx="40" cy="40" r="32"></circle>
+                                <circle class="progress-circle-fill" id="def-circle" cx="40" cy="40" r="32" 
+                                    stroke="#dc3545" stroke-dasharray="201" stroke-dashoffset="201"></circle>
+                            </svg>
+                            <div class="progress-circle-text" id="def-text">0</div>
+                        </div>
+                        <div class="value" style="color: #dc3545;" id="metricas-deficientes">0</div>
+                    </div>
+                </div>
+
+                <!-- Gráfico de barras -->
+                <div class="chart-container">
+                    <h3 style="margin-bottom: 20px; color: #333;">Comparativa de Métricas</h3>
+                    <div class="bar-chart" id="bar-chart">
+                        <!-- Las barras se generarán dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="metrics-grid">
+                <!-- Métrica 1: CC - Complejidad Ciclomática -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">1. Complejidad Ciclomática (CC)</span>
+                        <span class="metric-badge">CC</span>
+                    </div>
+                    <div class="formula">CC = E - N + 2P</div>
+                    <div class="inputs-group">
+                        <div class="input-row">
+                            <label class="input-label">E (Aristas):</label>
+                            <input type="number" id="cc_e" placeholder="Número de aristas" step="1" min="0" value="316">
+                        </div>
+                        <div class="input-row">
+                            <label class="input-label">N (Nodos):</label>
+                            <input type="number" id="cc_n" placeholder="Número de nodos" step="1" min="0" value="85">
+                        </div>
+                        <div class="input-row">
+                            <label class="input-label">P (Componentes):</label>
+                            <input type="number" id="cc_p" placeholder="Componentes conectados" step="1" min="0" value="1">
+                        </div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">Complejidad Ciclomática</div>
+                        <div class="result-value" id="result_cc">-</div>
+                    </div>
+                    <div class="cumplimiento-box" id="cumplimiento_cc">
+                        <div class="cumplimiento-header">
+                            <span class="cumplimiento-status" id="status_cc"></span>
+                            <span id="cumplimiento_titulo_cc">Evaluando...</span>
+                        </div>
+                        <div class="cumplimiento-detalle" id="cumplimiento_detalle_cc"></div>
+                        <div class="cumplimiento-porcentaje" id="cumplimiento_porcentaje_cc"></div>
+                    </div>
+                    <div class="source">Fuente: SonarQube, ESLint, PMD | Valor del proyecto: <strong>2.92</strong> (231 complejidad total / 79 funciones)</div>
+                </div>
+
+                <!-- Métrica 2: IM - Índice Multiplataforma -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">2. Índice Multiplataforma (IM)</span>
+                        <span class="metric-badge">IM</span>
+                    </div>
+                    <div class="formula">IM = (Plataformas Soportadas / Plataformas Objetivo) × 100</div>
+                    <div class="inputs-group">
+                        <div class="input-row">
+                            <label class="input-label">Plataformas Soportadas:</label>
+                            <input type="number" id="im_soportadas" placeholder="Ej: 3" step="1" min="0">
+                        </div>
+                        <div class="input-row">
+                            <label class="input-label">Plataformas Objetivo:</label>
+                            <input type="number" id="im_objetivo" placeholder="Ej: 5" step="1" min="1">
+                        </div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">Índice Multiplataforma (%)</div>
+                        <div class="result-value" id="result_im">-</div>
+                    </div>
+                    <div class="cumplimiento-box" id="cumplimiento_im">
+                        <div class="cumplimiento-header">
+                            <span class="cumplimiento-status" id="status_im"></span>
+                            <span id="cumplimiento_titulo_im">Evaluando...</span>
+                        </div>
+                        <div class="cumplimiento-detalle" id="cumplimiento_detalle_im"></div>
+                        <div class="cumplimiento-porcentaje" id="cumplimiento_porcentaje_im"></div>
+                    </div>
+                    <div class="source">Fuente: BrowserStack, SauceLabs (pruebas cruzadas)</div>
+                </div>
+
+                <!-- Métrica 3: VC - Índice de Vulnerabilidad Crítica -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">3. Vulnerabilidad Crítica (VC)</span>
+                        <span class="metric-badge">VC</span>
+                    </div>
+                    <div class="formula">VC = Vulnerabilidades Críticas / Total Vulnerabilidades</div>
+                    <div class="inputs-group">
+                        <div class="input-row">
+                            <label class="input-label">Vulnerabilidades Críticas:</label>
+                            <input type="number" id="vc_criticas" placeholder="Críticas" step="1" min="0" value="0">
+                        </div>
+                        <div class="input-row">
+                            <label class="input-label">Total Vulnerabilidades:</label>
+                            <input type="number" id="vc_total" placeholder="Total encontradas" step="1" min="0" value="5">
+                        </div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">Índice de Vulnerabilidad</div>
+                        <div class="result-value" id="result_vc">-</div>
+                    </div>
+                    <div class="cumplimiento-box" id="cumplimiento_vc">
+                        <div class="cumplimiento-header">
+                            <span class="cumplimiento-status" id="status_vc"></span>
+                            <span id="cumplimiento_titulo_vc">Evaluando...</span>
+                        </div>
+                        <div class="cumplimiento-detalle" id="cumplimiento_detalle_vc"></div>
+                        <div class="cumplimiento-porcentaje" id="cumplimiento_porcentaje_vc"></div>
+                    </div>
+                    <div class="source">Fuente: SonarQube, Fortify, OWASP ZAP, BurpSuite | Valor del proyecto: <strong>0.00</strong> (0 críticas de 5 totales)</div>
+                </div>
+
+                <!-- Métrica 4: MTBF - Tiempo Medio Entre Fallos -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">4. Tiempo Medio Entre Fallos (MTBF)</span>
+                        <span class="metric-badge">MTBF</span>
+                    </div>
+                    <div class="formula">MTBF = Tiempo Total Operación / Número de Fallos</div>
+                    <div class="inputs-group">
+                        <div class="input-row">
+                            <label class="input-label">Tiempo Operación (horas):</label>
+                            <input type="number" id="mtbf_tiempo" placeholder="Horas de operación" step="0.1" min="0">
+                        </div>
+                        <div class="input-row">
+                            <label class="input-label">Número de Fallos:</label>
+                            <input type="number" id="mtbf_fallos" placeholder="Total de fallos" step="1" min="1">
+                        </div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">MTBF (horas)</div>
+                        <div class="result-value" id="result_mtbf">-</div>
+                    </div>
+                    <div class="cumplimiento-box" id="cumplimiento_mtbf">
+                        <div class="cumplimiento-header">
+                            <span class="cumplimiento-status" id="status_mtbf"></span>
+                            <span id="cumplimiento_titulo_mtbf">Evaluando...</span>
+                        </div>
+                        <div class="cumplimiento-detalle" id="cumplimiento_detalle_mtbf"></div>
+                        <div class="cumplimiento-porcentaje" id="cumplimiento_porcentaje_mtbf"></div>
+                    </div>
+                    <div class="source">Fuente: Apache/Nginx logs, Prometheus, Datadog, New Relic</div>
+                </div>
+
+                <!-- Métrica 5: TPR - Tiempo Promedio de Respuesta -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">5. Tiempo Promedio Respuesta (TPR)</span>
+                        <span class="metric-badge">TPR</span>
+                    </div>
+                    <div class="formula">TPR = Σ Tiempo Respuesta / Número Solicitudes</div>
+                    <div class="inputs-group">
+                        <div class="input-row">
+                            <label class="input-label">Tiempo Total Respuesta (ms):</label>
+                            <input type="number" id="tpr_tiempo" placeholder="Suma total en ms" step="1" min="0" value="1435000">
+                        </div>
+                        <div class="input-row">
+                            <label class="input-label">Número de Solicitudes:</label>
+                            <input type="number" id="tpr_solicitudes" placeholder="Total de requests" step="1" min="1" value="5000">
+                        </div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">TPR (ms)</div>
+                        <div class="result-value" id="result_tpr">-</div>
+                    </div>
+                    <div class="cumplimiento-box" id="cumplimiento_tpr">
+                        <div class="cumplimiento-header">
+                            <span class="cumplimiento-status" id="status_tpr"></span>
+                            <span id="cumplimiento_titulo_tpr">Evaluando...</span>
+                        </div>
+                        <div class="cumplimiento-detalle" id="cumplimiento_detalle_tpr"></div>
+                        <div class="cumplimiento-porcentaje" id="cumplimiento_porcentaje_tpr"></div>
+                    </div>
+                    <div class="source">Fuente: Logs del servidor, herramientas de monitoreo | Valor del proyecto: <strong>287 ms</strong></div>
+                </div>
+
+                <!-- Métrica 6: Uso - Uso de Recursos -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">6. Uso de Recursos (%)</span>
+                        <span class="metric-badge">USO</span>
+                    </div>
+                    <div class="formula">Uso = (Recurso Utilizado / Recurso Total) × 100</div>
+                    <div class="inputs-group">
+                        <div class="input-row">
+                            <label class="input-label">Recurso Utilizado:</label>
+                            <input type="number" id="uso_utilizado" placeholder="CPU, RAM, Disco usado" step="0.01" min="0">
+                        </div>
+                        <div class="input-row">
+                            <label class="input-label">Recurso Total:</label>
+                            <input type="number" id="uso_total" placeholder="Total disponible" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">Uso de Recursos (%)</div>
+                        <div class="result-value" id="result_uso">-</div>
+                    </div>
+                    <div class="cumplimiento-box" id="cumplimiento_uso">
+                        <div class="cumplimiento-header">
+                            <span class="cumplimiento-status" id="status_uso"></span>
+                            <span id="cumplimiento_titulo_uso">Evaluando...</span>
+                        </div>
+                        <div class="cumplimiento-detalle" id="cumplimiento_detalle_uso"></div>
+                        <div class="cumplimiento-porcentaje" id="cumplimiento_porcentaje_uso"></div>
+                    </div>
+                    <div class="source">Fuente: Métricas de sistema (CPU, RAM, Disco)</div>
+                </div>
+
+                <!-- Métrica 7: Ef - Eficiencia (Productividad) -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">7. Eficiencia (Productividad)</span>
+                        <span class="metric-badge">Ef</span>
+                    </div>
+                    <div class="formula">Ef = Tareas Completadas / Tiempo Empleado</div>
+                    <div class="inputs-group">
+                        <div class="input-row">
+                            <label class="input-label">Tareas Completadas:</label>
+                            <input type="number" id="ef_tareas" placeholder="Total completadas" step="1" min="0">
+                        </div>
+                        <div class="input-row">
+                            <label class="input-label">Tiempo Empleado (horas):</label>
+                            <input type="number" id="ef_tiempo" placeholder="Horas trabajadas" step="0.1" min="0.1">
+                        </div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">Eficiencia (tareas/hora)</div>
+                        <div class="result-value" id="result_ef">-</div>
+                    </div>
+                    <div class="cumplimiento-box" id="cumplimiento_ef">
+                        <div class="cumplimiento-header">
+                            <span class="cumplimiento-status" id="status_ef"></span>
+                            <span id="cumplimiento_titulo_ef">Evaluando...</span>
+                        </div>
+                        <div class="cumplimiento-detalle" id="cumplimiento_detalle_ef"></div>
+                        <div class="cumplimiento-porcentaje" id="cumplimiento_porcentaje_ef"></div>
+                    </div>
+                    <div class="source">Fuente: Pruebas de Usuario, Hotjar, Google Analytics</div>
+                </div>
+
+                <!-- Métrica 8: E - Efectividad -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">8. Efectividad</span>
+                        <span class="metric-badge">E</span>
+                    </div>
+                    <div class="formula">E = (Tareas Correctas / Tareas Totales) × 100</div>
+                    <div class="inputs-group">
+                        <div class="input-row">
+                            <label class="input-label">Tareas Correctas:</label>
+                            <input type="number" id="e_correctas" placeholder="Ejecutadas correctamente" step="1" min="0" value="2">
+                        </div>
+                        <div class="input-row">
+                            <label class="input-label">Tareas Totales:</label>
+                            <input type="number" id="e_totales" placeholder="Total de tareas" step="1" min="1" value="12">
+                        </div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">Efectividad (%)</div>
+                        <div class="result-value" id="result_e">-</div>
+                    </div>
+                    <div class="cumplimiento-box" id="cumplimiento_e">
+                        <div class="cumplimiento-header">
+                            <span class="cumplimiento-status" id="status_e"></span>
+                            <span id="cumplimiento_titulo_e">Evaluando...</span>
+                        </div>
+                        <div class="cumplimiento-detalle" id="cumplimiento_detalle_e"></div>
+                        <div class="cumplimiento-porcentaje" id="cumplimiento_porcentaje_e"></div>
+                    </div>
+                    <div class="source">Fuente: Testing manual/automatizado | Valor del proyecto: <strong>16.67%</strong> (2 tests pasados de 12 totales)</div>
+                </div>
+
+                <!-- Métrica 9: NC - Índice de No Conformidad -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">9. Índice No Conformidad (NC)</span>
+                        <span class="metric-badge">NC</span>
+                    </div>
+                    <div class="formula">NC = No Conformidades / Total Procesos Auditados</div>
+                    <div class="inputs-group">
+                        <div class="input-row">
+                            <label class="input-label">No Conformidades:</label>
+                            <input type="number" id="nc_no_conformidades" placeholder="Problemas encontrados" step="1" min="0" value="540">
+                        </div>
+                        <div class="input-row">
+                            <label class="input-label">Procesos Auditados:</label>
+                            <input type="number" id="nc_procesos" placeholder="Total auditados" step="1" min="1" value="1">
+                        </div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">Índice NC</div>
+                        <div class="result-value" id="result_nc">-</div>
+                    </div>
+                    <div class="cumplimiento-box" id="cumplimiento_nc">
+                        <div class="cumplimiento-header">
+                            <span class="cumplimiento-status" id="status_nc"></span>
+                            <span id="cumplimiento_titulo_nc">Evaluando...</span>
+                        </div>
+                        <div class="cumplimiento-detalle" id="cumplimiento_detalle_nc"></div>
+                        <div class="cumplimiento-porcentaje" id="cumplimiento_porcentaje_nc"></div>
+                    </div>
+                    <div class="source">Fuente: Auditorías internas | Valor del proyecto: <strong>540</strong> (530 errores ESLint + 10 tests fallidos)</div>
+                </div>
+
+                <!-- Métrica 10: ICP - Índice de Cumplimiento de Procesos -->
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">10. Cumplimiento Procesos (ICP)</span>
+                        <span class="metric-badge">ICP</span>
+                    </div>
+                    <div class="formula">ICP = (Actividades Realizadas / Actividades Planificadas) × 100</div>
+                    <div class="inputs-group">
+                        <div class="input-row">
+                            <label class="input-label">Actividades Realizadas:</label>
+                            <input type="number" id="icp_realizadas" placeholder="Completadas" step="1" min="0" value="316">
+                        </div>
+                        <div class="input-row">
+                            <label class="input-label">Actividades Planificadas:</label>
+                            <input type="number" id="icp_planificadas" placeholder="Total planificadas" step="1" min="1" value="717">
+                        </div>
+                    </div>
+                    <div class="result-box">
+                        <div class="result-label">ICP (%)</div>
+                        <div class="result-value" id="result_icp">-</div>
+                    </div>
+                    <div class="cumplimiento-box" id="cumplimiento_icp">
+                        <div class="cumplimiento-header">
+                            <span class="cumplimiento-status" id="status_icp"></span>
+                            <span id="cumplimiento_titulo_icp">Evaluando...</span>
+                        </div>
+                        <div class="cumplimiento-detalle" id="cumplimiento_detalle_icp"></div>
+                        <div class="cumplimiento-porcentaje" id="cumplimiento_porcentaje_icp"></div>
+                    </div>
+                    <div class="source">Fuente: Gestión de proyectos (Jira, Trello) | Valor del proyecto: <strong>44.07%</strong> (316 statements cubiertos de 717)</div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="calcularTodas()">Recalcular Todas</button>
+                <button class="btn btn-secondary" onclick="limpiarTodo()">Limpiar Todo</button>
+                <button class="btn btn-primary" onclick="exportarResultados()">Exportar Resultados</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Datos del proyecto cargados automáticamente
+        const datosProyecto = {
+            complejidadCiclomatica: 2.92,
+            vulnerabilidadesCriticas: 0,
+            vulnerabilidadesTotales: 5,
+            tprPromedio: 287,
+            testsCorrectos: 2,
+            testsTotales: 12,
+            noConformidades: 540,
+            icpValue: 44.07,
+            statementsCubiertos: 316,
+            statementsTotales: 717
+        };
+
+        // Función para calcular CC
+        function calcularCC() {
+            const e = parseFloat(document.getElementById('cc_e').value);
+            const n = parseFloat(document.getElementById('cc_n').value);
+            const p = parseFloat(document.getElementById('cc_p').value) || 1;
+
+            if (!isNaN(e) && !isNaN(n)) {
+                const cc = e - n + (2 * p);
+                document.getElementById('result_cc').textContent = cc.toFixed(2);
+                evaluarCC(cc);
+            } else {
+                document.getElementById('result_cc').textContent = '-';
+                ocultarCumplimiento('cc');
+            }
+        }
+
+        // Función para evaluar Complejidad Ciclomática
+        function evaluarCC(valor) {
+            let nivel, titulo, detalle, porcentaje, clase, statusClase;
+            
+            if (valor <= 5) {
+                nivel = 'excelente';
+                statusClase = 'status-excelente';
+                titulo = 'EXCELENTE - Complejidad Baja';
+                detalle = 'El código es simple y fácil de mantener. Cumple estándares de calidad.';
+                porcentaje = '100% Cumplimiento';
+                clase = 'excelente';
+            } else if (valor <= 10) {
+                nivel = 'bueno';
+                statusClase = 'status-bueno';
+                titulo = 'BUENO - Complejidad Moderada';
+                detalle = 'El código tiene complejidad aceptable. Se recomienda monitorear.';
+                porcentaje = Math.round((10 - valor) / 5 * 100) + '% Cumplimiento';
+                clase = 'bueno';
+            } else if (valor <= 20) {
+                nivel = 'aceptable';
+                statusClase = 'status-aceptable';
+                titulo = 'ACEPTABLE - Complejidad Alta';
+                detalle = 'El código tiene alta complejidad. Se recomienda refactorización.';
+                porcentaje = Math.round((20 - valor) / 10 * 100) + '% Cumplimiento';
+                clase = 'aceptable';
+            } else {
+                nivel = 'deficiente';
+                statusClase = 'status-deficiente';
+                titulo = 'DEFICIENTE - Complejidad Muy Alta';
+                detalle = 'El código es difícil de mantener. REQUIERE refactorización urgente.';
+                porcentaje = '0% Cumplimiento';
+                clase = 'deficiente';
+            }
+            
+            mostrarCumplimiento('cc', titulo, detalle, porcentaje, clase, statusClase);
+        }
+
+        // Función para calcular IM
+        function calcularIM() {
+            const soportadas = parseFloat(document.getElementById('im_soportadas').value);
+            const objetivo = parseFloat(document.getElementById('im_objetivo').value);
+
+            if (!isNaN(soportadas) && !isNaN(objetivo) && objetivo > 0) {
+                const im = (soportadas / objetivo) * 100;
+                document.getElementById('result_im').textContent = im.toFixed(2) + '%';
+                evaluarIM(im);
+            } else {
+                document.getElementById('result_im').textContent = '-';
+                ocultarCumplimiento('im');
+            }
+        }
+
+        // Función para evaluar Índice Multiplataforma
+        function evaluarIM(valor) {
+            let titulo, detalle, porcentaje, clase, statusClase;
+            
+            if (valor >= 90) {
+                titulo = 'EXCELENTE - Alta Compatibilidad';
+                detalle = 'El sistema soporta la mayoría de plataformas objetivo.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'excelente';
+                statusClase = 'status-excelente';
+            } else if (valor >= 70) {
+                titulo = 'BUENO - Compatibilidad Adecuada';
+                detalle = 'Soporta un buen número de plataformas. Considerar expansión.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'bueno';
+                statusClase = 'status-bueno';
+            } else if (valor >= 50) {
+                titulo = 'ACEPTABLE - Compatibilidad Limitada';
+                detalle = 'Compatibilidad básica. Se recomienda mejorar soporte.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'aceptable';
+                statusClase = 'status-aceptable';
+            } else {
+                titulo = 'DEFICIENTE - Baja Compatibilidad';
+                detalle = 'Compatibilidad insuficiente. REQUIERE ampliación urgente.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'deficiente';
+                statusClase = 'status-deficiente';
+            }
+            
+            mostrarCumplimiento('im', titulo, detalle, porcentaje, clase, statusClase);
+        }
+
+        // Función para calcular VC
+        function calcularVC() {
+            const criticas = parseFloat(document.getElementById('vc_criticas').value);
+            const total = parseFloat(document.getElementById('vc_total').value);
+
+            if (!isNaN(criticas) && !isNaN(total) && total > 0) {
+                const vc = criticas / total;
+                document.getElementById('result_vc').textContent = vc.toFixed(4);
+                evaluarVC(vc);
+            } else {
+                document.getElementById('result_vc').textContent = '-';
+                ocultarCumplimiento('vc');
+            }
+        }
+
+        // Evaluar Vulnerabilidad Crítica
+        function evaluarVC(valor) {
+            let titulo, detalle, porcentaje, clase, statusClase;
+            
+            if (valor === 0) {
+                titulo = 'EXCELENTE - Sin Vulnerabilidades Críticas';
+                detalle = 'No se detectaron vulnerabilidades críticas. Sistema seguro.';
+                porcentaje = '100% Cumplimiento';
+                clase = 'excelente';
+                statusClase = 'status-excelente';
+            } else if (valor < 0.2) {
+                titulo = 'BUENO - Pocas Vulnerabilidades Críticas';
+                detalle = 'Bajo nivel de vulnerabilidades críticas. Monitorear.';
+                porcentaje = Math.round((1 - valor) * 100) + '% Cumplimiento';
+                clase = 'bueno';
+                statusClase = 'status-bueno';
+            } else if (valor < 0.5) {
+                titulo = 'ACEPTABLE - Vulnerabilidades Presentes';
+                detalle = 'Nivel moderado de vulnerabilidades. Requiere atención.';
+                porcentaje = Math.round((1 - valor) * 100) + '% Cumplimiento';
+                clase = 'aceptable';
+                statusClase = 'status-aceptable';
+            } else {
+                titulo = 'DEFICIENTE - Alto Riesgo de Seguridad';
+                detalle = 'Muchas vulnerabilidades críticas. ACCIÓN INMEDIATA requerida.';
+                porcentaje = Math.round((1 - valor) * 100) + '% Cumplimiento';
+                clase = 'deficiente';
+                statusClase = 'status-deficiente';
+            }
+            
+            mostrarCumplimiento('vc', titulo, detalle, porcentaje, clase, statusClase);
+        }
+
+        // Función para calcular MTBF
+        function calcularMTBF() {
+            const tiempo = parseFloat(document.getElementById('mtbf_tiempo').value);
+            const fallos = parseFloat(document.getElementById('mtbf_fallos').value);
+
+            if (!isNaN(tiempo) && !isNaN(fallos) && fallos > 0) {
+                const mtbf = tiempo / fallos;
+                document.getElementById('result_mtbf').textContent = mtbf.toFixed(2);
+                evaluarMTBF(mtbf);
+            } else {
+                document.getElementById('result_mtbf').textContent = '-';
+                ocultarCumplimiento('mtbf');
+            }
+        }
+
+        // Evaluar MTBF
+        function evaluarMTBF(valor) {
+            let titulo, detalle, porcentaje, clase, statusClase;
+            
+            if (valor >= 720) {
+                titulo = 'EXCELENTE - Alta Disponibilidad';
+                detalle = 'Sistema muy estable. Tiempo entre fallos óptimo (>30 días).';
+                porcentaje = '100% Cumplimiento';
+                clase = 'excelente';
+                statusClase = 'status-excelente';
+            } else if (valor >= 168) {
+                titulo = 'BUENO - Disponibilidad Aceptable';
+                detalle = 'Buena estabilidad. Tiempo entre fallos adecuado (>7 días).';
+                porcentaje = Math.round((valor / 720) * 100) + '% Cumplimiento';
+                clase = 'bueno';
+                statusClase = 'status-bueno';
+            } else if (valor >= 24) {
+                titulo = 'ACEPTABLE - Disponibilidad Moderada';
+                detalle = 'Estabilidad moderada. Requiere mejorar (>24 horas).';
+                porcentaje = Math.round((valor / 720) * 100) + '% Cumplimiento';
+                clase = 'aceptable';
+                statusClase = 'status-aceptable';
+            } else {
+                titulo = 'DEFICIENTE - Baja Disponibilidad';
+                detalle = 'Sistema inestable. REQUIERE mejoras urgentes (<24 horas).';
+                porcentaje = Math.round((valor / 720) * 100) + '% Cumplimiento';
+                clase = 'deficiente';
+                statusClase = 'status-deficiente';
+            }
+            
+            mostrarCumplimiento('mtbf', titulo, detalle, porcentaje, clase, statusClase);
+        }
+
+        // Función para calcular TPR
+        function calcularTPR() {
+            const tiempo = parseFloat(document.getElementById('tpr_tiempo').value);
+            const solicitudes = parseFloat(document.getElementById('tpr_solicitudes').value);
+
+            if (!isNaN(tiempo) && !isNaN(solicitudes) && solicitudes > 0) {
+                const tpr = tiempo / solicitudes;
+                document.getElementById('result_tpr').textContent = tpr.toFixed(2);
+                evaluarTPR(tpr);
+            } else {
+                document.getElementById('result_tpr').textContent = '-';
+                ocultarCumplimiento('tpr');
+            }
+        }
+
+        // Evaluar TPR
+        function evaluarTPR(valor) {
+            let titulo, detalle, porcentaje, clase, statusClase;
+            
+            if (valor <= 100) {
+                titulo = 'EXCELENTE - Respuesta Rápida';
+                detalle = 'Tiempo de respuesta óptimo (<100ms). Excelente experiencia.';
+                porcentaje = '100% Cumplimiento';
+                clase = 'excelente';
+                statusClase = 'status-excelente';
+            } else if (valor <= 300) {
+                titulo = 'BUENO - Respuesta Aceptable';
+                detalle = 'Tiempo de respuesta adecuado (<300ms). Buena experiencia.';
+                porcentaje = Math.round((300 - valor) / 200 * 100) + '% Cumplimiento';
+                clase = 'bueno';
+                statusClase = 'status-bueno';
+            } else if (valor <= 1000) {
+                titulo = 'ACEPTABLE - Respuesta Lenta';
+                detalle = 'Tiempo de respuesta alto (<1s). Considerar optimización.';
+                porcentaje = Math.round((1000 - valor) / 700 * 100) + '% Cumplimiento';
+                clase = 'aceptable';
+                statusClase = 'status-aceptable';
+            } else {
+                titulo = 'DEFICIENTE - Respuesta Muy Lenta';
+                detalle = 'Tiempo de respuesta crítico (>1s). OPTIMIZACIÓN URGENTE.';
+                porcentaje = '0% Cumplimiento';
+                clase = 'deficiente';
+                statusClase = 'status-deficiente';
+            }
+            
+            mostrarCumplimiento('tpr', titulo, detalle, porcentaje, clase, statusClase);
+        }
+
+        // Función para calcular Uso
+        function calcularUso() {
+            const utilizado = parseFloat(document.getElementById('uso_utilizado').value);
+            const total = parseFloat(document.getElementById('uso_total').value);
+
+            if (!isNaN(utilizado) && !isNaN(total) && total > 0) {
+                const uso = (utilizado / total) * 100;
+                document.getElementById('result_uso').textContent = uso.toFixed(2) + '%';
+                evaluarUso(uso);
+            } else {
+                document.getElementById('result_uso').textContent = '-';
+                ocultarCumplimiento('uso');
+            }
+        }
+
+        // Evaluar Uso de Recursos
+        function evaluarUso(valor) {
+            let titulo, detalle, porcentaje, clase, statusClase;
+            
+            if (valor <= 60) {
+                titulo = 'EXCELENTE - Uso Óptimo';
+                detalle = 'Uso eficiente de recursos (<60%). Sistema saludable.';
+                porcentaje = Math.round((60 - valor) / 60 * 100) + '% Cumplimiento';
+                clase = 'excelente';
+                statusClase = 'status-excelente';
+            } else if (valor <= 80) {
+                titulo = 'BUENO - Uso Normal';
+                detalle = 'Uso aceptable de recursos (<80%). Monitorear.';
+                porcentaje = Math.round((80 - valor) / 20 * 100 + 50) + '% Cumplimiento';
+                clase = 'bueno';
+                statusClase = 'status-bueno';
+            } else if (valor <= 90) {
+                titulo = 'ACEPTABLE - Uso Elevado';
+                detalle = 'Recursos cerca del límite (<90%). Considerar escalado.';
+                porcentaje = Math.round((90 - valor) / 10 * 100) + '% Cumplimiento';
+                clase = 'aceptable';
+                statusClase = 'status-aceptable';
+            } else {
+                titulo = 'DEFICIENTE - Sobrecarga';
+                detalle = 'Recursos saturados (>90%). ACCIÓN INMEDIATA requerida.';
+                porcentaje = '0% Cumplimiento';
+                clase = 'deficiente';
+                statusClase = 'status-deficiente';
+            }
+            
+            mostrarCumplimiento('uso', titulo, detalle, porcentaje, clase, statusClase);
+        }
+
+        // Función para calcular Ef
+        function calcularEf() {
+            const tareas = parseFloat(document.getElementById('ef_tareas').value);
+            const tiempo = parseFloat(document.getElementById('ef_tiempo').value);
+
+            if (!isNaN(tareas) && !isNaN(tiempo) && tiempo > 0) {
+                const ef = tareas / tiempo;
+                document.getElementById('result_ef').textContent = ef.toFixed(2);
+                evaluarEf(ef);
+            } else {
+                document.getElementById('result_ef').textContent = '-';
+                ocultarCumplimiento('ef');
+            }
+        }
+
+        // Evaluar Eficiencia
+        function evaluarEf(valor) {
+            let titulo, detalle, porcentaje, clase, statusClase;
+            
+            if (valor >= 5) {
+                titulo = 'EXCELENTE - Alta Productividad';
+                detalle = 'Eficiencia muy alta (≥5 tareas/hora). Excelente rendimiento.';
+                porcentaje = '100% Cumplimiento';
+                clase = 'excelente';
+                statusClase = 'status-excelente';
+            } else if (valor >= 3) {
+                titulo = 'BUENO - Productividad Adecuada';
+                detalle = 'Eficiencia buena (≥3 tareas/hora). Rendimiento aceptable.';
+                porcentaje = Math.round((valor / 5) * 100) + '% Cumplimiento';
+                clase = 'bueno';
+                statusClase = 'status-bueno';
+            } else if (valor >= 1) {
+                titulo = 'ACEPTABLE - Productividad Baja';
+                detalle = 'Eficiencia moderada (≥1 tarea/hora). Considerar mejoras.';
+                porcentaje = Math.round((valor / 5) * 100) + '% Cumplimiento';
+                clase = 'aceptable';
+                statusClase = 'status-aceptable';
+            } else {
+                titulo = 'DEFICIENTE - Muy Baja Productividad';
+                detalle = 'Eficiencia crítica (<1 tarea/hora). MEJORAS URGENTES.';
+                porcentaje = Math.round((valor / 5) * 100) + '% Cumplimiento';
+                clase = 'deficiente';
+                statusClase = 'status-deficiente';
+            }
+            
+            mostrarCumplimiento('ef', titulo, detalle, porcentaje, clase, statusClase);
+        }
+
+        // Función para calcular E (Efectividad)
+        function calcularE() {
+            const correctas = parseFloat(document.getElementById('e_correctas').value);
+            const totales = parseFloat(document.getElementById('e_totales').value);
+
+            if (!isNaN(correctas) && !isNaN(totales) && totales > 0) {
+                const e = (correctas / totales) * 100;
+                document.getElementById('result_e').textContent = e.toFixed(2) + '%';
+                evaluarE(e);
+            } else {
+                document.getElementById('result_e').textContent = '-';
+                ocultarCumplimiento('e');
+            }
+        }
+
+        // Evaluar Efectividad
+        function evaluarE(valor) {
+            let titulo, detalle, porcentaje, clase, statusClase;
+            
+            if (valor >= 90) {
+                titulo = 'EXCELENTE - Alta Efectividad';
+                detalle = 'Tasa de éxito muy alta (≥90%). Sistema confiable.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'excelente';
+                statusClase = 'status-excelente';
+            } else if (valor >= 70) {
+                titulo = 'BUENO - Efectividad Adecuada';
+                detalle = 'Tasa de éxito buena (≥70%). Funcionamiento correcto.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'bueno';
+                statusClase = 'status-bueno';
+            } else if (valor >= 50) {
+                titulo = 'ACEPTABLE - Efectividad Moderada';
+                detalle = 'Tasa de éxito moderada (≥50%). Requiere mejoras.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'aceptable';
+                statusClase = 'status-aceptable';
+            } else {
+                titulo = 'DEFICIENTE - Baja Efectividad';
+                detalle = 'Tasa de éxito crítica (<50%). CORRECCIÓN URGENTE.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'deficiente';
+                statusClase = 'status-deficiente';
+            }
+            
+            mostrarCumplimiento('e', titulo, detalle, porcentaje, clase, statusClase);
+        }
+
+        // Función para calcular NC
+        function calcularNC() {
+            const noConformidades = parseFloat(document.getElementById('nc_no_conformidades').value);
+            const procesos = parseFloat(document.getElementById('nc_procesos').value);
+
+            if (!isNaN(noConformidades) && !isNaN(procesos) && procesos > 0) {
+                const nc = noConformidades / procesos;
+                document.getElementById('result_nc').textContent = nc.toFixed(2);
+                evaluarNC(nc);
+            } else {
+                document.getElementById('result_nc').textContent = '-';
+                ocultarCumplimiento('nc');
+            }
+        }
+
+        // Evaluar No Conformidad (Menor es mejor)
+        function evaluarNC(valor) {
+            let titulo, detalle, porcentaje, clase, statusClase;
+            
+            if (valor <= 5) {
+                titulo = 'EXCELENTE - Pocas No Conformidades';
+                detalle = 'Nivel muy bajo de problemas (≤5). Excelente calidad.';
+                porcentaje = Math.round((5 - valor) / 5 * 100) + '% Cumplimiento';
+                clase = 'excelente';
+                statusClase = 'status-excelente';
+            } else if (valor <= 20) {
+                titulo = 'BUENO - No Conformidades Controladas';
+                detalle = 'Nivel aceptable de problemas (≤20). Calidad adecuada.';
+                porcentaje = Math.round((20 - valor) / 15 * 80) + '% Cumplimiento';
+                clase = 'bueno';
+                statusClase = 'status-bueno';
+            } else if (valor <= 50) {
+                titulo = 'ACEPTABLE - Muchas No Conformidades';
+                detalle = 'Nivel alto de problemas (≤50). Requiere atención.';
+                porcentaje = Math.round((50 - valor) / 30 * 50) + '% Cumplimiento';
+                clase = 'aceptable';
+                statusClase = 'status-aceptable';
+            } else {
+                titulo = 'DEFICIENTE - Crítico Nivel de Problemas';
+                detalle = 'Nivel crítico (>50). ACCIÓN CORRECTIVA INMEDIATA.';
+                porcentaje = '0% Cumplimiento';
+                clase = 'deficiente';
+                statusClase = 'status-deficiente';
+            }
+            
+            mostrarCumplimiento('nc', titulo, detalle, porcentaje, clase, statusClase);
+        }
+
+        // Función para calcular ICP
+        function calcularICP() {
+            const realizadas = parseFloat(document.getElementById('icp_realizadas').value);
+            const planificadas = parseFloat(document.getElementById('icp_planificadas').value);
+
+            if (!isNaN(realizadas) && !isNaN(planificadas) && planificadas > 0) {
+                const icp = (realizadas / planificadas) * 100;
+                document.getElementById('result_icp').textContent = icp.toFixed(2) + '%';
+                evaluarICP(icp);
+            } else {
+                document.getElementById('result_icp').textContent = '-';
+                ocultarCumplimiento('icp');
+            }
+        }
+
+        // Evaluar Índice de Cumplimiento de Procesos
+        function evaluarICP(valor) {
+            let titulo, detalle, porcentaje, clase, statusClase;
+            
+            if (valor >= 90) {
+                titulo = 'EXCELENTE - Alto Cumplimiento';
+                detalle = 'Cumplimiento excelente (≥90%). Proceso muy efectivo.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'excelente';
+                statusClase = 'status-excelente';
+            } else if (valor >= 70) {
+                titulo = 'BUENO - Cumplimiento Adecuado';
+                detalle = 'Cumplimiento bueno (≥70%). Proceso funcional.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'bueno';
+                statusClase = 'status-bueno';
+            } else if (valor >= 50) {
+                titulo = 'ACEPTABLE - Cumplimiento Bajo';
+                detalle = 'Cumplimiento moderado (≥50%). Requiere mejoras.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'aceptable';
+                statusClase = 'status-aceptable';
+            } else {
+                titulo = 'DEFICIENTE - Muy Bajo Cumplimiento';
+                detalle = 'Cumplimiento crítico (<50%). REVISIÓN URGENTE.';
+                porcentaje = Math.round(valor) + '% Cumplimiento';
+                clase = 'deficiente';
+                statusClase = 'status-deficiente';
+            }
+            
+            mostrarCumplimiento('icp', titulo, detalle, porcentaje, clase, statusClase);
+        }
+
+        // Funciones auxiliares para mostrar/ocultar cuadros de cumplimiento
+        function mostrarCumplimiento(metrica, titulo, detalle, porcentaje, clase, statusClase) {
+            const box = document.getElementById(`cumplimiento_${metrica}`);
+            const tituloEl = document.getElementById(`cumplimiento_titulo_${metrica}`);
+            const detalleEl = document.getElementById(`cumplimiento_detalle_${metrica}`);
+            const porcentajeEl = document.getElementById(`cumplimiento_porcentaje_${metrica}`);
+            const statusEl = document.getElementById(`status_${metrica}`);
+            
+            // Remover todas las clases previas
+            box.className = 'cumplimiento-box activo';
+            box.classList.add(clase);
+            
+            statusEl.className = 'cumplimiento-status';
+            statusEl.classList.add(statusClase);
+            
+            tituloEl.textContent = titulo;
+            detalleEl.textContent = detalle;
+            porcentajeEl.textContent = porcentaje;
+            
+            // Actualizar dashboard después de mostrar cumplimiento
+            actualizarDashboard();
+        }
+
+        function ocultarCumplimiento(metrica) {
+            const box = document.getElementById(`cumplimiento_${metrica}`);
+            box.classList.remove('activo');
+            actualizarDashboard();
+        }
+
+        // Función para actualizar el dashboard general
+        function actualizarDashboard() {
+            const metricas = ['cc', 'im', 'vc', 'mtbf', 'tpr', 'uso', 'ef', 'e', 'nc', 'icp'];
+            let calculadas = 0;
+            let excelentes = 0;
+            let buenas = 0;
+            let aceptables = 0;
+            let deficientes = 0;
+            let sumaCumplimiento = 0;
+
+            const metricasData = [];
+
+            metricas.forEach(metrica => {
+                const box = document.getElementById(`cumplimiento_${metrica}`);
+                if (box && box.classList.contains('activo')) {
+                    calculadas++;
+                    
+                    if (box.classList.contains('excelente')) excelentes++;
+                    else if (box.classList.contains('bueno')) buenas++;
+                    else if (box.classList.contains('aceptable')) aceptables++;
+                    else if (box.classList.contains('deficiente')) deficientes++;
+
+                    // Extraer porcentaje de cumplimiento
+                    const porcentajeText = document.getElementById(`cumplimiento_porcentaje_${metrica}`).textContent;
+                    const match = porcentajeText.match(/(\d+)%/);
+                    if (match) {
+                        const porcentaje = parseInt(match[1]);
+                        sumaCumplimiento += porcentaje;
+                        
+                        // Guardar datos para el gráfico
+                        metricasData.push({
+                            nombre: metrica.toUpperCase(),
+                            valor: porcentaje,
+                            clase: box.className.split(' ').find(c => ['excelente', 'bueno', 'aceptable', 'deficiente'].includes(c))
+                        });
+                    }
+                }
+            });
+
+            // Actualizar tarjetas de resumen
+            const porcentajeCalculadas = (calculadas / 10) * 100;
+            document.getElementById('metricas-calculadas').textContent = Math.round(porcentajeCalculadas) + '%';
+            document.getElementById('calc-text').textContent = calculadas + '/10';
+
+            const promedioCumplimiento = calculadas > 0 ? Math.round(sumaCumplimiento / calculadas) : 0;
+            document.getElementById('cumplimiento-promedio').textContent = promedioCumplimiento + '%';
+            document.getElementById('prom-text').textContent = promedioCumplimiento + '%';
+
+            document.getElementById('metricas-excelentes').textContent = excelentes;
+            document.getElementById('exc-text').textContent = excelentes;
+
+            document.getElementById('metricas-deficientes').textContent = deficientes;
+            document.getElementById('def-text').textContent = deficientes;
+
+            // Actualizar círculos de progreso
+            actualizarCirculoProgreso('calc-circle', porcentajeCalculadas, '#667eea');
+            actualizarCirculoProgreso('prom-circle', promedioCumplimiento, getColorPorPorcentaje(promedioCumplimiento));
+            actualizarCirculoProgreso('exc-circle', (excelentes / 10) * 100, '#28a745');
+            actualizarCirculoProgreso('def-circle', (deficientes / 10) * 100, '#dc3545');
+
+            // Actualizar gráfico de barras
+            actualizarGraficoBarras(metricasData);
+        }
+
+        function actualizarCirculoProgreso(id, porcentaje, color) {
+            const circle = document.getElementById(id);
+            if (!circle) return;
+            
+            const circumference = 2 * Math.PI * 32; // r=32
+            const offset = circumference - (porcentaje / 100) * circumference;
+            
+            circle.setAttribute('stroke', color);
+            circle.style.strokeDashoffset = offset;
+        }
+
+        function getColorPorPorcentaje(porcentaje) {
+            if (porcentaje >= 90) return '#28a745';
+            if (porcentaje >= 70) return '#17a2b8';
+            if (porcentaje >= 50) return '#ffc107';
+            return '#dc3545';
+        }
+
+        function actualizarGraficoBarras(metricasData) {
+            const barChart = document.getElementById('bar-chart');
+            if (!barChart) return;
+
+            // Ordenar por valor descendente
+            metricasData.sort((a, b) => b.valor - a.valor);
+
+            barChart.innerHTML = '';
+            metricasData.forEach(metrica => {
+                const barItem = document.createElement('div');
+                barItem.className = 'bar-item';
+
+                const label = document.createElement('div');
+                label.className = 'bar-label';
+                label.textContent = metrica.nombre;
+
+                const track = document.createElement('div');
+                track.className = 'bar-track';
+
+                const fill = document.createElement('div');
+                fill.className = 'bar-fill';
+                fill.style.width = '0%';
+                fill.textContent = metrica.valor + '%';
+                
+                // Color según clase
+                const colores = {
+                    'excelente': '#28a745',
+                    'bueno': '#17a2b8',
+                    'aceptable': '#ffc107',
+                    'deficiente': '#dc3545'
+                };
+                fill.style.backgroundColor = colores[metrica.clase] || '#6c757d';
+
+                track.appendChild(fill);
+
+                const value = document.createElement('div');
+                value.className = 'bar-value';
+                value.textContent = metrica.valor + '%';
+                value.style.color = colores[metrica.clase] || '#6c757d';
+
+                barItem.appendChild(label);
+                barItem.appendChild(track);
+                barItem.appendChild(value);
+
+                barChart.appendChild(barItem);
+
+                // Animación
+                setTimeout(() => {
+                    fill.style.width = metrica.valor + '%';
+                }, 100);
+            });
+        }
+
+        // Event listeners para cálculo automático
+        function inicializarEventListeners() {
+            ['cc_e', 'cc_n', 'cc_p'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calcularCC);
+            });
+
+            ['im_soportadas', 'im_objetivo'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calcularIM);
+            });
+
+            ['vc_criticas', 'vc_total'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calcularVC);
+            });
+
+            ['mtbf_tiempo', 'mtbf_fallos'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calcularMTBF);
+            });
+
+            ['tpr_tiempo', 'tpr_solicitudes'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calcularTPR);
+            });
+
+            ['uso_utilizado', 'uso_total'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calcularUso);
+            });
+
+            ['ef_tareas', 'ef_tiempo'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calcularEf);
+            });
+
+            ['e_correctas', 'e_totales'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calcularE);
+            });
+
+            ['nc_no_conformidades', 'nc_procesos'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calcularNC);
+            });
+
+            ['icp_realizadas', 'icp_planificadas'].forEach(id => {
+                document.getElementById(id).addEventListener('input', calcularICP);
+            });
+        }
+
+        // Función para calcular todas las métricas
+        function calcularTodas() {
+            calcularCC();
+            calcularIM();
+            calcularVC();
+            calcularMTBF();
+            calcularTPR();
+            calcularUso();
+            calcularEf();
+            calcularE();
+            calcularNC();
+            calcularICP();
+            
+            // Actualizar dashboard después de calcular todas
+            setTimeout(() => {
+                actualizarDashboard();
+            }, 100);
+        }
+
+        // Función para limpiar todos los campos
+        function limpiarTodo() {
+            if (confirm('¿Estás seguro de que deseas limpiar todos los campos?')) {
+                document.querySelectorAll('input[type="number"]').forEach(input => {
+                    input.value = '';
+                });
+                document.querySelectorAll('.result-value').forEach(result => {
+                    result.textContent = '-';
+                });
+                document.querySelectorAll('.cumplimiento-box').forEach(box => {
+                    box.classList.remove('activo');
+                });
+                actualizarDashboard();
+            }
+        }
+
+        // Función para exportar resultados en PDF
+        function exportarResultados() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const metricas = ['cc', 'im', 'vc', 'mtbf', 'tpr', 'uso', 'ef', 'e', 'nc', 'icp'];
+            const nombresMetricas = {
+                'cc': 'Complejidad Ciclomática (CC)',
+                'im': 'Índice Multiplataforma (IM)',
+                'vc': 'Vulnerabilidad Crítica (VC)',
+                'mtbf': 'Tiempo Medio Entre Fallos (MTBF)',
+                'tpr': 'Tiempo Promedio Respuesta (TPR)',
+                'uso': 'Uso de Recursos',
+                'ef': 'Eficiencia',
+                'e': 'Efectividad',
+                'nc': 'Índice No Conformidad (NC)',
+                'icp': 'Cumplimiento Procesos (ICP)'
+            };
+
+            // Título
+            doc.setFillColor(102, 126, 234);
+            doc.rect(0, 0, 210, 40, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20);
+            doc.setFont(undefined, 'bold');
+            doc.text('Calculadora de Métricas ISO 9001', 105, 15, { align: 'center' });
+            doc.setFontSize(12);
+            doc.setFont(undefined, 'normal');
+            doc.text('Sistema de Agendamiento de Citas Médicas', 105, 25, { align: 'center' });
+            doc.text('Fecha: ' + new Date().toLocaleString('es-ES'), 105, 33, { align: 'center' });
+
+            // Resumen general
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Resumen General', 14, 50);
+            
+            let calculadas = 0;
+            let excelentes = 0;
+            let deficientes = 0;
+            let sumaCumplimiento = 0;
+
+            metricas.forEach(metrica => {
+                const box = document.getElementById(`cumplimiento_${metrica}`);
+                if (box && box.classList.contains('activo')) {
+                    calculadas++;
+                    if (box.classList.contains('excelente')) excelentes++;
+                    if (box.classList.contains('deficiente')) deficientes++;
+                    
+                    const porcentajeText = document.getElementById(`cumplimiento_porcentaje_${metrica}`).textContent;
+                    const match = porcentajeText.match(/(\d+)%/);
+                    if (match) sumaCumplimiento += parseInt(match[1]);
+                }
+            });
+
+            const promedio = calculadas > 0 ? Math.round(sumaCumplimiento / calculadas) : 0;
+
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            doc.text(`Métricas Calculadas: ${calculadas}/10 (${Math.round((calculadas/10)*100)}%)`, 14, 58);
+            doc.text(`Cumplimiento Promedio: ${promedio}%`, 14, 65);
+            doc.text(`Métricas Excelentes: ${excelentes}`, 14, 72);
+            doc.text(`Métricas Deficientes: ${deficientes}`, 14, 79);
+
+            // Línea separadora
+            doc.setDrawColor(102, 126, 234);
+            doc.setLineWidth(0.5);
+            doc.line(14, 84, 196, 84);
+
+            // Detalles de métricas
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'bold');
+            doc.text('Detalle de Métricas', 14, 92);
+
+            let yPos = 100;
+            doc.setFontSize(10);
+
+            metricas.forEach((metrica, index) => {
+                const resultado = document.getElementById(`result_${metrica}`).textContent;
+                const box = document.getElementById(`cumplimiento_${metrica}`);
+                
+                // Verificar si necesitamos nueva página
+                if (yPos > 260) {
+                    doc.addPage();
+                    yPos = 20;
+                }
+
+                // Nombre de la métrica
+                doc.setFont(undefined, 'bold');
+                doc.text(`${index + 1}. ${nombresMetricas[metrica]}`, 14, yPos);
+                
+                doc.setFont(undefined, 'normal');
+                doc.text(`Resultado: ${resultado}`, 20, yPos + 6);
+
+                if (box && box.classList.contains('activo')) {
+                    const titulo = document.getElementById(`cumplimiento_titulo_${metrica}`).textContent;
+                    const porcentaje = document.getElementById(`cumplimiento_porcentaje_${metrica}`).textContent;
+                    
+                    // Color según estado
+                    if (box.classList.contains('excelente')) {
+                        doc.setTextColor(40, 167, 69);
+                    } else if (box.classList.contains('bueno')) {
+                        doc.setTextColor(23, 162, 184);
+                    } else if (box.classList.contains('aceptable')) {
+                        doc.setTextColor(255, 193, 7);
+                    } else if (box.classList.contains('deficiente')) {
+                        doc.setTextColor(220, 53, 69);
+                    }
+                    
+                    doc.text(`Estado: ${titulo}`, 20, yPos + 12);
+                    doc.text(`${porcentaje}`, 20, yPos + 18);
+                    doc.setTextColor(0, 0, 0);
+                } else {
+                    doc.setTextColor(150, 150, 150);
+                    doc.text('Estado: No calculado', 20, yPos + 12);
+                    doc.setTextColor(0, 0, 0);
+                }
+
+                yPos += 28;
+            });
+
+            // Pie de página
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(9);
+                doc.setTextColor(128, 128, 128);
+                doc.text(`Página ${i} de ${pageCount}`, 105, 290, { align: 'center' });
+                doc.text('Generado por Calculadora de Métricas ISO 9001', 105, 285, { align: 'center' });
+            }
+
+            // Guardar PDF
+            doc.save('metricas_iso9001_' + new Date().getTime() + '.pdf');
+            alert('PDF generado y descargado correctamente');
+        }
+
+        // Inicializar cálculos con valores pre-cargados al cargar la página
+        window.addEventListener('load', function() {
+            // Inicializar event listeners primero
+            inicializarEventListeners();
+            
+            // Calcular todas las métricas con valores pre-cargados
+            calcularTodas();
+            
+            // Pequeño delay para asegurar que todo se renderice
+            setTimeout(() => {
+                actualizarDashboard();
+            }, 200);
+        });
+    </script>
+</body>
+</html>

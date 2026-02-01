@@ -43,6 +43,9 @@ const ListaCitas = () => {
         citasData = await obtenerCitasPaciente(usuarioActual.id);
       } else if (usuarioActual.rol === 'doctor') {
         citasData = await obtenerCitasDoctor(usuarioActual.id);
+      } else if (usuarioActual.rol === 'asistente') {
+        // El asistente puede ver todas las citas
+        citasData = await obtenerCitasPaciente(usuarioActual.id); // Por ahora vacío
       }
       setCitas(citasData);
     } catch (error) {
@@ -54,7 +57,8 @@ const ListaCitas = () => {
   
   useEffect(() => {
     cargarCitas();
-  }, [usuarioActual?.id, usuarioActual?.rol, cargarCitas]); // Solo depender de id y rol del usuario
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuarioActual?.id, usuarioActual?.rol]); // Solo depender de id y rol del usuario
 
   // Funciones utilitarias para validación y horarios
   const obtenerNombreDia = (fecha) => {

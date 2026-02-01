@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import './styles/CalendarioLaboral.css';
 import axios from 'axios'; // Asegúrate de tener axios instalado
+import { guardarCalificacion } from '../services/api';
+import StripeCheckout from './StripeCheckout';
+
+const PRECIO_CITA = 20.00; // Precio fijo de la cita en USD
 
 const CalendarioLaboral = () => {
   const {
@@ -33,6 +37,16 @@ const CalendarioLaboral = () => {
     intervalo: ''
   });
   const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'];
+
+  // Estados para modal de calificacion
+  const [mostrarModalCalificacion, setMostrarModalCalificacion] = useState(false);
+  const [citaRecienAgendada, setCitaRecienAgendada] = useState(null);
+  const [calificacionSeleccionada, setCalificacionSeleccionada] = useState(0);
+  const [calificacionHover, setCalificacionHover] = useState(0);
+
+  // Estados para el sistema de pago
+  const [mostrarCheckout, setMostrarCheckout] = useState(false);
+  const [datosCitaPago, setDatosCitaPago] = useState(null);
 
   const puedeEditar = usuarioActual && (usuarioActual.rol === 'doctor' || usuarioActual.rol === 'administrador');
 // Estado para el reporte
@@ -126,15 +140,27 @@ const generarReporte = async (e) => {
       cargarTodasLasCitas(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [citasActualizadas]); // Solo depender de citasActualizadas, no de la función
+  }, [citasActualizadas]); // Solo depender de citasActualizadas, no de la funcion
 
   // useEffect adicional para forzar re-renderizado cuando las citas cambian
   useEffect(() => {
     // Este efecto se ejecuta cada vez que todasLasCitas cambia
-    // Fuerza al componente a re-evaluar qué horarios están ocupados
+    // Fuerza al componente a re-evaluar que horarios estan ocupados
   }, [todasLasCitas]); // Dependencia directa de todasLasCitas
 
-  // Determinar de qué doctor se muestran los horarios
+  // Polling para actualizar citas cada 15 segundos para ver cambios de otros usuarios
+  useEffect(() => {
+    if (!usuarioActual || usuarioActual.rol !== 'paciente') return;
+    
+    const intervalo = setInterval(() => {
+      cargarTodasLasCitas(true);
+    }, 15000); // Cada 15 segundos
+    
+    return () => clearInterval(intervalo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuarioActual?.id]);
+
+  // Determinar de que doctor se muestran los horarios
   const emailDoctor = usuarioActual?.rol === 'paciente' ? 'axeldoge4@gmail.com' : usuarioActual?.email;
   const horarios = usuarioActual?.rol === 'doctor' ? horariosBackend : horariosBackend.filter(h => h.doctor_name && h.doctor_apellido);
   
@@ -159,15 +185,20 @@ const generarReporte = async (e) => {
     return fechaCalculada;
   };
   
-  // Función que determina si un horario (día+horario) ya está ocupado
+  // Funcion que determina si un horario (dia+horario) ya esta ocupado
   const estaOcupado = (nombreDia, horarioStr, doctorId) => {
     const fechaStr = convertirDiaAFecha(nombreDia);
     if (!fechaStr) return false;
     
+    // Normalizar el horario para comparacion (eliminar espacios extra)
+    const horarioNormalizado = horarioStr.trim();
+    
     const ocupado = todasLasCitas.some(cita => {
       const coincideDoctor = String(cita.doctor_id) === String(doctorId);
       const coincideDia = cita.dia === fechaStr;
-      const coincideHorario = cita.horario === horarioStr;
+      // Normalizar el horario de la cita tambien
+      const horarioCitaNormalizado = cita.horario ? cita.horario.trim() : '';
+      const coincideHorario = horarioCitaNormalizado === horarioNormalizado;
       const estadoValido = cita.estado !== 'cancelada';
       
       return coincideDoctor && coincideDia && coincideHorario && estadoValido;
@@ -413,37 +444,97 @@ const generarReporte = async (e) => {
   };
 
   const handleAgendarCita = async (horario, citaStr) => {
-    if (!usuarioActual) return alert('Debes iniciar sesión.');
+    if (!usuarioActual) return alert('Debes iniciar sesion.');
     if (usuarioActual.rol !== 'paciente') return alert('Solo los pacientes pueden agendar citas.');
     
-    // Convertir el nombre del día a fecha usando la función helper
+    // Convertir el nombre del dia a fecha usando la funcion helper
     const fechaStr = convertirDiaAFecha(horario.dia);
     if (!fechaStr) return alert('Error al procesar la fecha.');
     
-    const confirmacion = window.confirm(`¿Agendar cita para ${horario.dia} ${citaStr} (${fechaStr})?`);
-    if (!confirmacion) return;
+    // Recargar citas antes de verificar disponibilidad
+    await cargarTodasLasCitas(true);
+    
+    // Verificar nuevamente si el horario sigue disponible
+    if (estaOcupado(horario.dia, citaStr, horario.doctor_id)) {
+      alert('Este horario ya no esta disponible. Por favor selecciona otro horario.');
+      return;
+    }
     
     // Obtener el ID del doctor desde el horario
-    const doctorId = horario.doctor_id || 3; // 3 es el ID del doctor axeldoge4@gmail.com
+    const doctorId = horario.doctor_id || 3;
     
-    const resultado = await agendarCita({
-      dia: fechaStr, // Usar la fecha en formato YYYY-MM-DD
-      horario: citaStr,
-      doctorId: doctorId,
-      especialidad: 'Consulta General' // Sin especialidad específica
+    // Obtener nombre del doctor
+    const doctorNombre = horario.doctor_nombre || 'Doctor';
+    
+    // Extraer solo la hora de inicio del citaStr (formato: "09:00 - 09:30")
+    const horaInicio = citaStr.split(' - ')[0];
+    
+    // Preparar datos para el pago
+    const datosCita = {
+      doctor_id: doctorId,
+      paciente_id: usuarioActual.id,
+      fecha: fechaStr,
+      hora: horaInicio,
+      motivo: 'Consulta General',
+      paciente_email: usuarioActual.email,
+      paciente_nombre: usuarioActual.nombre || usuarioActual.email,
+      doctor_nombre: doctorNombre,
+      especialidad: 'Medicina General',
+      monto: PRECIO_CITA
+    };
+    
+    // Mostrar modal de pago en lugar de agendar directamente
+    setDatosCitaPago(datosCita);
+    setMostrarCheckout(true);
+  };
+
+  // Callback cuando el pago es exitoso
+  const handlePaymentSuccess = async (result) => {
+    // Guardar la cita recien agendada para mostrar modal de calificacion
+    setCitaRecienAgendada({
+      id: result.cita?.id,
+      dia: datosCitaPago.fecha,
+      horario: datosCitaPago.hora
     });
+    setCalificacionSeleccionada(0);
+    setMostrarModalCalificacion(true);
     
-    if (resultado.success) {
-      alert(resultado.message);
-      // Recargar tanto horarios como citas para actualizar disponibilidad
-      await cargarTodasLasCitas(); // Solo este log es útil para el usuario
-      if (usuarioActual.rol === 'paciente') {
-        const horarios = await cargarTodosLosHorarios();
-        setHorariosBackend(horarios);
-      }
-    } else {
-      alert(resultado.message);
+    // Recargar tanto horarios como citas para actualizar disponibilidad
+    await cargarTodasLasCitas();
+    if (usuarioActual.rol === 'paciente') {
+      const horarios = await cargarTodosLosHorarios();
+      setHorariosBackend(horarios);
     }
+    
+    setDatosCitaPago(null);
+  };
+
+  // Manejar envio de calificacion
+  const handleEnviarCalificacion = async () => {
+    if (calificacionSeleccionada === 0) {
+      alert('Por favor selecciona una calificacion');
+      return;
+    }
+    
+    try {
+      await guardarCalificacion(citaRecienAgendada.id, usuarioActual.id, calificacionSeleccionada);
+      alert('Gracias por tu calificacion. Tu cita ha sido agendada exitosamente.');
+      setMostrarModalCalificacion(false);
+      setCitaRecienAgendada(null);
+      setCalificacionSeleccionada(0);
+    } catch (error) {
+      console.error('Error al guardar calificacion:', error);
+      alert('Cita agendada exitosamente. No se pudo guardar la calificacion.');
+      setMostrarModalCalificacion(false);
+    }
+  };
+
+  // Omitir calificacion
+  const handleOmitirCalificacion = () => {
+    alert('Tu cita ha sido agendada exitosamente.');
+    setMostrarModalCalificacion(false);
+    setCitaRecienAgendada(null);
+    setCalificacionSeleccionada(0);
   };
 
   return (
@@ -515,11 +606,16 @@ const generarReporte = async (e) => {
                           <p><strong>Doctor:</strong> {horario.doctor_name} {horario.doctor_apellido}</p>
                         )}
                         <p><strong>Horario:</strong> {(horario.hora_inicio || horario.horaInicio).substring(0, 5)} - {(horario.hora_fin || horario.horaFin).substring(0, 5)}</p>
-                        <p><strong>Duración:</strong> {horario.duracion_cita || horario.duracionCita} min</p>
+                        <p><strong>Duracion:</strong> {horario.duracion_cita || horario.duracionCita} min</p>
                         <p><strong>Intervalo:</strong> {horario.intervalo} min</p>
                         <p><strong>Citas posibles:</strong> {calcularCitasPosibles(horario)}</p>
                       </div>
-                      <details>
+                      <details onToggle={(e) => {
+                        if (e.target.open) {
+                          // Recargar citas al abrir el detalle para verificar disponibilidad actualizada
+                          cargarTodasLasCitas(true);
+                        }
+                      }}>
                         <summary>Ver horarios de citas disponibles</summary>
                         <div className="details-citas">
                           {generarHorariosCitas(horario).map((cita, idx) => {
@@ -591,6 +687,173 @@ const generarReporte = async (e) => {
           })}
         </div>
       </div>
+
+      {/* Modal de Calificacion de Satisfaccion */}
+      {mostrarModalCalificacion && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '16px',
+            padding: '30px',
+            maxWidth: '450px',
+            width: '90%',
+            textAlign: 'center',
+            boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px',
+              color: 'white',
+              fontSize: '28px'
+            }}>
+              &#10003;
+            </div>
+            
+            <h3 style={{
+              fontSize: '22px',
+              fontWeight: '700',
+              color: '#1f2937',
+              marginBottom: '10px'
+            }}>
+              Cita Agendada Exitosamente
+            </h3>
+            
+            <p style={{
+              color: '#6b7280',
+              marginBottom: '25px',
+              fontSize: '14px'
+            }}>
+              Tu cita ha sido registrada para el {citaRecienAgendada?.dia} a las {citaRecienAgendada?.horario}
+            </p>
+            
+            <div style={{
+              background: '#f8fafc',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '25px'
+            }}>
+              <p style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: '#374151',
+                marginBottom: '15px'
+              }}>
+                Como fue tu experiencia agendando la cita?
+              </p>
+              
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '8px'
+              }}>
+                {[1, 2, 3, 4, 5].map((estrella) => (
+                  <button
+                    key={estrella}
+                    onClick={() => setCalificacionSeleccionada(estrella)}
+                    onMouseEnter={() => setCalificacionHover(estrella)}
+                    onMouseLeave={() => setCalificacionHover(0)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: '36px',
+                      padding: '5px',
+                      transition: 'transform 0.2s',
+                      transform: (calificacionHover >= estrella || calificacionSeleccionada >= estrella) ? 'scale(1.1)' : 'scale(1)',
+                      color: (calificacionHover >= estrella || calificacionSeleccionada >= estrella) ? '#fbbf24' : '#d1d5db'
+                    }}
+                  >
+                    &#9733;
+                  </button>
+                ))}
+              </div>
+              
+              {calificacionSeleccionada > 0 && (
+                <p style={{
+                  marginTop: '10px',
+                  fontSize: '14px',
+                  color: '#059669',
+                  fontWeight: '500'
+                }}>
+                  {calificacionSeleccionada === 1 && 'Muy malo'}
+                  {calificacionSeleccionada === 2 && 'Malo'}
+                  {calificacionSeleccionada === 3 && 'Regular'}
+                  {calificacionSeleccionada === 4 && 'Bueno'}
+                  {calificacionSeleccionada === 5 && 'Excelente'}
+                </p>
+              )}
+            </div>
+            
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              justifyContent: 'center'
+            }}>
+              <button
+                onClick={handleOmitirCalificacion}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: '1px solid #e5e7eb',
+                  background: 'white',
+                  color: '#6b7280',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                Omitir
+              </button>
+              <button
+                onClick={handleEnviarCalificacion}
+                disabled={calificacionSeleccionada === 0}
+                style={{
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: calificacionSeleccionada > 0 
+                    ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' 
+                    : '#e5e7eb',
+                  color: calificacionSeleccionada > 0 ? 'white' : '#9ca3af',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: calificacionSeleccionada > 0 ? 'pointer' : 'not-allowed'
+                }}
+              >
+                Enviar Calificacion
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Pago con Stripe */}
+      <StripeCheckout 
+        isOpen={mostrarCheckout}
+        onClose={() => {
+          setMostrarCheckout(false);
+          setDatosCitaPago(null);
+        }}
+        citaData={datosCitaPago}
+        onPaymentSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 };

@@ -9,6 +9,7 @@ const notificacionRoutes = require('./routes/notificacionRoutes');
 const citasRoutes = require('./routes/citas');
 const emailRoutes = require('./routes/emailRoutes'); // Rutas de email independientes
 const whatsappRoutes = require('./routes/whatsappRoutes'); // Rutas de WhatsApp independientes
+const paymentRoutes = require('./routes/paymentRoutes'); // Rutas de pagos Stripe
 
 dotenv.config();
 
@@ -18,7 +19,7 @@ const app = express();
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://agendamiento-de-citas-medicas.vercel.app', 'https://*.vercel.app'] 
-    : ['http://localhost:3000', 'http://localhost:3001'],
+    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -49,6 +50,7 @@ app.use('/api/notificaciones', notificacionRoutes);
 app.use('/api/citasreportes', citasRoutes);
 app.use('/api/emails', emailRoutes); // Sistema de emails independiente
 app.use('/api/whatsapp', whatsappRoutes); // Sistema de WhatsApp independiente
+app.use('/api/pagos', paymentRoutes); // Sistema de pagos Stripe
 
 // Agregar ruta base para verificar que el backend está funcionando
 app.get('/', (req, res) => {

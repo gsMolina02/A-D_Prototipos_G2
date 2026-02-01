@@ -123,3 +123,55 @@ export const obtenerNotificacionesPorUsuario = async (usuarioId) => {
 export const marcarComoLeida = async (id) => {
   return await axios.put(`${apiUrl}/notificaciones/${id}/leida`);
 };
+
+// ========== FUNCIONES PARA ASISTENTE ORGANIZACIONAL ==========
+
+// Obtener todos los pacientes
+export const obtenerPacientes = async () => {
+  return await axios.get(`${apiUrl}/pacientes`);
+};
+
+// Obtener todos los doctores
+export const obtenerDoctores = async () => {
+  return await axios.get(`${apiUrl}/doctores`);
+};
+
+// Obtener estadisticas del consultorio
+export const obtenerEstadisticasConsultorio = async () => {
+  return await axios.get(`${apiUrl}/estadisticas`);
+};
+
+// Cerrar sesion y registrar tiempo
+export const cerrarSesionAPI = async (sesionId) => {
+  return await axios.post(`${apiUrl}/logout`, { sesionId });
+};
+
+// Obtener estadisticas de sesiones
+export const obtenerEstadisticasSesiones = async () => {
+  return await axios.get(`${apiUrl}/estadisticas-sesiones`);
+};
+
+// Guardar calificacion de satisfaccion
+export const guardarCalificacion = async (citaId, pacienteId, calificacion) => {
+  return await axios.post(`${apiUrl}/calificacion`, { citaId, pacienteId, calificacion });
+};
+
+// Obtener estadisticas de satisfaccion
+export const obtenerEstadisticasSatisfaccion = async () => {
+  return await axios.get(`${apiUrl}/estadisticas-satisfaccion`);
+};
+
+// Solicitar cambio de contrasena
+export const solicitarCambioContrasena = async (email) => {
+  return await axios.post(`${apiUrl}/solicitar-cambio-contrasena`, { email });
+};
+
+// Cambiar contrasena con token
+export const cambiarContrasenaAPI = async (email, token, nuevaContrasena) => {
+  return await axios.post(`${apiUrl}/cambiar-contrasena`, { email, token, nuevaContrasena });
+};
+
+// Verificar estado de cuenta
+export const verificarEstadoCuenta = async (email) => {
+  return await axios.post(`${apiUrl}/verificar-estado-cuenta`, { email });
+};

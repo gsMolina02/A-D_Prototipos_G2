@@ -684,6 +684,11 @@ body {
   color: var(--white);
 }
 
+.profile-badge.asistente {
+  background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+  color: var(--white);
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .sidebar {

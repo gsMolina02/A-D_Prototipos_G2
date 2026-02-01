@@ -87,7 +87,6 @@ const Notificaciones = () => {
 
       {/* Panel de notificaciones */}
       {visible && (
-<<<<<<< Updated upstream
         <>
           {/* Overlay para cerrar al hacer clic fuera */}
           <div
@@ -135,7 +134,7 @@ const Notificaciones = () => {
                 fontWeight: '600',
                 color: '#374151'
               }}>
-                Notificaciones
+                📬 Notificaciones ({misNotificaciones.length})
               </h3>
               <button
                 onClick={() => setVisible(false)}
@@ -180,8 +179,8 @@ const Notificaciones = () => {
                   No tienes notificaciones
                 </div>
               ) : (
-                misNotificaciones
-                  .sort((a, b) => b.leida - a.leida)
+                [...misNotificaciones]
+                  .sort((a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion))
                   .map((n, index) => (
                     <div 
                       key={n.id} 
@@ -213,76 +212,22 @@ const Notificaciones = () => {
                       }}>
                         {n.mensaje}
                       </div>
+                      {n.fecha_creacion && (
+                        <div style={{ 
+                          fontSize: '11px', 
+                          color: '#999',
+                          marginTop: '6px',
+                          marginLeft: !n.leida ? '16px' : '0'
+                        }}>
+                          📅 {new Date(n.fecha_creacion).toLocaleString('es-ES')}
+                        </div>
+                      )}
                     </div>
                   ))
               )}
             </div>
           </div>
         </>
-=======
-        <div style={{
-          position: 'absolute',
-          top: 35,
-          right: 0,
-          background: 'white',
-          border: '1px solid #ccc',
-          borderRadius: 6,
-          minWidth: 300,
-          maxWidth: 400,
-          maxHeight: 400,
-          zIndex: 10,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            padding: '10px 15px',
-            borderBottom: '1px solid #eee',
-            backgroundColor: '#f8f9fa',
-            fontWeight: 'bold',
-            fontSize: '14px'
-          }}>
-            📬 Notificaciones ({misNotificaciones.length})
-          </div>
-          <div style={{
-            maxHeight: 320,
-            overflowY: 'auto',
-            overflowX: 'hidden'
-          }}>
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-              {misNotificaciones.length === 0 ? (
-                <li style={{ padding: '15px', color: '#888', textAlign: 'center' }}>
-                  No tienes ninguna notificación
-                </li>
-              ) : (
-                misNotificaciones.reverse().map(n => (
-                  <li key={n.id} style={{ 
-                    padding: '12px 15px', 
-                    borderBottom: '1px solid #eee', 
-                    color: n.leida ? '#666' : '#222',
-                    backgroundColor: n.leida ? 'transparent' : '#f0f8ff',
-                    fontSize: '13px',
-                    lineHeight: '1.4',
-                    wordWrap: 'break-word'
-                  }}>
-                    <div style={{ marginBottom: '4px' }}>
-                      {n.mensaje}
-                    </div>
-                    {n.fecha_creacion && (
-                      <div style={{ 
-                        fontSize: '11px', 
-                        color: '#999',
-                        marginTop: '4px'
-                      }}>
-                        📅 {new Date(n.fecha_creacion).toLocaleString('es-ES')}
-                      </div>
-                    )}
-                  </li>
-                ))
-              )}
-            </ul>
-          </div>
-        </div>
->>>>>>> Stashed changes
       )}
       
       {/* Keyframes para la animación pulse */}

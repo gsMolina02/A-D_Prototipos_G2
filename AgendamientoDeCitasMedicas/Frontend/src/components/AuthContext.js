@@ -14,7 +14,8 @@ import {
   registerUser,
   loginUser,
   marcarComoLeida,
-  obtenerNotificacionesPorUsuario
+  obtenerNotificacionesPorUsuario,
+  cerrarSesionAPI
 } from '../services/api';
 
 export const AuthContext = createContext();
@@ -26,6 +27,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [usuarioActual, setUsuarioActual] = useState(null);
+  const [sesionActualId, setSesionActualId] = useState(null);
   // eslint-disable-next-line no-unused-vars
   const [citasAgendadas, setCitasAgendadas] = useState([]);
   const [todasLasCitas, setTodasLasCitas] = useState([]);
@@ -34,7 +36,16 @@ export const AuthProvider = ({ children }) => {
   const [notificacionNoLeida, setNotificacionNoLeida] = useState(false);
   const [citasActualizadas, setCitasActualizadas] = useState(0); // Contador para forzar actualizaciones
 
-  const cerrarSesion = () => {
+  const cerrarSesion = async () => {
+    // Registrar fin de sesion
+    if (sesionActualId) {
+      try {
+        await cerrarSesionAPI(sesionActualId);
+      } catch (error) {
+        console.error('Error al cerrar sesion:', error);
+      }
+    }
+    setSesionActualId(null);
     setUsuarioActual(null);
   };
 
@@ -60,16 +71,28 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await loginUser({ email, password });
       
-      // El backend devuelve { message: 'Login successful', user }
+      // El backend devuelve { message: 'Login successful', user, sesionId }
       if (response.data && response.data.user) {
         setUsuarioActual(response.data.user);
+        if (response.data.sesionId) {
+          setSesionActualId(response.data.sesionId);
+        }
         
-        return { success: true, message: 'Sesión iniciada exitosamente' };
+        return { success: true, message: 'Sesion iniciada exitosamente' };
       }
       
-      return { success: false, message: response.data?.message || 'Credenciales inválidas' };
+      return { success: false, message: response.data?.message || 'Credenciales invalidas' };
     } catch (error) {
-      const errorMessage = error.response?.data?.error || 'Error al iniciar sesión';
+      // Verificar si la cuenta esta bloqueada
+      if (error.response?.data?.bloqueado) {
+        return { 
+          success: false, 
+          bloqueado: true,
+          email: error.response?.data?.email || email,
+          message: error.response?.data?.error || 'Cuenta bloqueada. Debe cambiar su contraseña.'
+        };
+      }
+      const errorMessage = error.response?.data?.error || 'Error al iniciar sesion';
       return { success: false, message: errorMessage };
     }
   };
@@ -165,12 +188,16 @@ export const AuthProvider = ({ children }) => {
         especialidad: cita.especialidad || 'Consulta General'
       };
 
-      await crearCita(citaData);
+      const response = await crearCita(citaData);
       
-      // Cargar notificaciones actualizadas después de agendar
+      // Cargar notificaciones actualizadas despues de agendar
       await cargarNotificaciones();
       
-      return { success: true, message: `Cita agendada exitosamente para el ${cita.dia} a las ${cita.horario}` };
+      return { 
+        success: true, 
+        message: `Cita agendada exitosamente para el ${cita.dia} a las ${cita.horario}`,
+        citaId: response.data?.id || response.data?.cita?.id
+      };
     } catch (error) {
       return { success: false, message: error.response?.data?.error || 'Error al agendar cita' };
     }
@@ -198,13 +225,11 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await obtenerTodasLasCitas();
       setTodasLasCitas(response.data);
-      
-      setTodasLasCitas(response.data);
       return response.data;
     } catch (error) {
       return [];
     }
-  }, []); // Sin dependencias ya que no depende de ningún estado
+  }, []); // Sin dependencias ya que no depende de ningun estado
 
   // Función para notificar cambios en las citas
   const notificarCambioEnCitas = () => {
@@ -246,7 +271,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // --- Funciones de notificaciones ---
-  const cargarNotificaciones = async () => {
+  const cargarNotificaciones = useCallback(async () => {
     if (!usuarioActual) return;
     
     try {
@@ -259,7 +284,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       // Error silencioso
     }
-  };
+  }, [usuarioActual]);
 
   // Cargar notificaciones cuando el usuario cambie
   useEffect(() => {
@@ -269,7 +294,7 @@ export const AuthProvider = ({ children }) => {
       setNotificaciones([]);
       setNotificacionNoLeida(false);
     }
-  }, [usuarioActual?.id, cargarNotificaciones]);
+  }, [usuarioActual?.id]); // Solo depende del ID del usuario
 
   // Cargar todas las citas cuando se inicializa la aplicación o cambia el usuario
   useEffect(() => {
@@ -282,7 +307,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     cargarDatosIniciales();
-  }, [usuarioActual, cargarTodasLasCitas]); // Ejecutar cuando cambie el usuario (incluye cuando se carga la app)
+  }, [usuarioActual?.id]); // Solo ejecutar cuando cambie el ID del usuario
 
   const marcarNotificacionesLeidas = async () => {
     try {

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import Login from './components/Login';
 import Register from './components/Register';
+import LandingPage from './components/LandingPage';
 import CalendarioLaboral from './components/CalendarioLaboral';
 import ListaCitas from './components/ListasCitas';
+import PanelAsistente from './components/PanelAsistente';
 import './App.css';
 import Notificaciones from './components/Notificaciones';
 import ReporteCitas from './components/ReporteCitas'; // Importa el componente de reporte de citas
@@ -21,6 +23,8 @@ const Dashboard = () => {
         return <ListaCitas />;
       case 'reporte':
         return <ReporteCitas />;
+      case 'panel-asistente':
+        return <PanelAsistente />;
       case 'perfil':
       default:
         return (
@@ -130,6 +134,21 @@ const Dashboard = () => {
                 <span className="nav-text">Reporte de Citas</span>
               </button>
           )}
+
+          {/* Menú exclusivo para asistente organizacional */}
+          {usuarioActual.rol === 'asistente' && (
+            <button
+              className={`sidebar-nav-item ${vistaActiva === 'panel-asistente' ? 'active' : ''}`}
+              onClick={() => setVistaActiva('panel-asistente')}
+            >
+              <span className="nav-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+                </svg>
+              </span>
+              <span className="nav-text">Panel de Control</span>
+            </button>
+          )}
         </nav>
         
         <div className="sidebar-footer">
@@ -155,6 +174,7 @@ const Dashboard = () => {
             {vistaActiva === 'calendario' && 'Calendario Laboral'}
             {vistaActiva === 'citas' && 'Mis Citas'}
             {vistaActiva === 'reporte' && 'Reporte de Citas'}
+            {vistaActiva === 'panel-asistente' && 'Panel de Asistente'}
           </h2>
         </div>
         
@@ -175,18 +195,21 @@ const AuthContent = ({ currentView, setCurrentView }) => {
     return <Dashboard />;
   }
 
-  // Si no hay usuario logueado, mostrar login o register
+  // Si no hay usuario logueado, mostrar landing, login o register
   switch (currentView) {
     case 'register':
       return <Register onNavigate={setCurrentView} />;
-    default:
+    case 'login':
       return <Login onNavigate={setCurrentView} />;
+    case 'landing':
+    default:
+      return <LandingPage onNavigate={setCurrentView} />;
   }
 };
 
 // Componente principal de la aplicación
 const App = () => {
-  const [currentView, setCurrentView] = useState('login');
+  const [currentView, setCurrentView] = useState('landing');
   
   return (
     <AuthProvider>

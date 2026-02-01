@@ -1,6 +1,6 @@
-projectKey=agendamiento-citas-medicas
+projectKey=tareaMetrica
 serverUrl=http://localhost:9000
-serverVersion=9.9.8.100196
-dashboardUrl=http://localhost:9000/dashboard?id=agendamiento-citas-medicas
-ceTaskId=AZr3claG0GWCBRO34ocM
-ceTaskUrl=http://localhost:9000/api/ce/task?id=AZr3claG0GWCBRO34ocM
+serverVersion=26.1.0.118079
+dashboardUrl=http://localhost:9000/dashboard?id=tareaMetrica
+ceTaskId=3c22fd07-70ca-469a-ab7a-fb432d5b098e
+ceTaskUrl=http://localhost:9000/api/ce/task?id=3c22fd07-70ca-469a-ab7a-fb432d5b098e
