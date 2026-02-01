@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablas de Métricas - Fase 1</title>
+    <style>
+        body {
+            font-family: 'Calibri', 'Arial', sans-serif;
+            margin: 40px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            font-size: 24pt;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            font-size: 16pt;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .valor-critico {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .valor-warning {
+            color: #f39c12;
+            font-weight: bold;
+        }
+        .valor-ok {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .pendiente {
+            background-color: #fff3cd;
+            color: #856404;
+            font-style: italic;
+            text-align: center;
+        }
+        .formula {
+            font-family: 'Courier New', monospace;
+            background-color: #ecf0f1;
+            padding: 2px 5px;
+            font-size: 9pt;
+        }
+        .nota {
+            background-color: #e8f4f8;
+            padding: 15px;
+            border-left: 4px solid #3498db;
+            margin: 20px 0;
+            font-size: 10pt;
+        }
+    </style>
+</head>
+<body>
+    <h1>MÉTRICAS DE CALIDAD - FASE 1<br>Sistema de Agendamiento de Citas Médicas</h1>
+    
+    <div class="nota">
+        <strong>Fecha de Análisis:</strong> 6 de diciembre de 2025<br>
+        <strong>Fase:</strong> Fase 1 - Análisis Inicial (Antes de Correcciones)<br>
+        <strong>Proyecto:</strong> Sistema de Agendamiento de Citas Médicas
+    </div>
+
+    <!-- TABLA 1: MÉTRICAS GENERALES DEL CÓDIGO -->
+    <h2>Tabla 1: Métricas Generales del Código</h2>
+    <table>
+        <tr>
+            <th>Métrica</th>
+            <th>Valor Fase 1</th>
+            <th>Valor Fase 2</th>
+            <th>Observaciones</th>
+        </tr>
+        <tr>
+            <td>Archivos Analizados</td>
+            <td>39</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Archivos .js en src/ y tests en raíz</td>
+        </tr>
+        <tr>
+            <td>Líneas Totales de Código</td>
+            <td>2,914</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Incluye comentarios y líneas en blanco</td>
+        </tr>
+        <tr>
+            <td>Líneas de Código Efectivas</td>
+            <td>2,246</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Sin comentarios ni líneas vacías</td>
+        </tr>
+        <tr>
+            <td>Líneas de Comentarios</td>
+            <td>668</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Documentación inline</td>
+        </tr>
+        <tr>
+            <td>Ratio de Comentarios</td>
+            <td class="valor-warning">22.92%</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Ideal: > 30%</td>
+        </tr>
+        <tr>
+            <td>Total de Funciones</td>
+            <td>20</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Funciones definidas y arrow functions</td>
+        </tr>
+        <tr>
+            <td>Archivos de Test</td>
+            <td>13</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Archivos test_*.js y *.test.js</td>
+        </tr>
+    </table>
+
+    <!-- TABLA 2: COBERTURA DE TESTS -->
+    <h2>Tabla 2: Cobertura de Tests (Jest Coverage)</h2>
+    <table>
+        <tr>
+            <th>Tipo de Cobertura</th>
+            <th>Fase 1 (%)</th>
+            <th>Fase 2 (%)</th>
+            <th>Δ</th>
+            <th>Meta ISO 25010</th>
+        </tr>
+        <tr>
+            <td>Statements</td>
+            <td class="valor-critico">24.40%</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>> 80%</td>
+        </tr>
+        <tr>
+            <td>Branches</td>
+            <td class="valor-critico">0.72%</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>> 70%</td>
+        </tr>
+        <tr>
+            <td>Functions</td>
+            <td class="valor-critico">12.16%</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>> 75%</td>
+        </tr>
+        <tr>
+            <td>Lines</td>
+            <td class="valor-critico">24.57%</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>> 80%</td>
+        </tr>
+        <tr>
+            <td><strong>Promedio Total</strong></td>
+            <td class="valor-critico"><strong>15.46%</strong></td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td><strong>> 75%</strong></td>
+        </tr>
+    </table>
+
+    <div class="nota">
+        <strong>Fórmula de Cobertura:</strong><br>
+        <span class="formula">Cobertura (%) = (Elementos Cubiertos / Elementos Totales) × 100</span><br>
+        <strong>Interpretación:</strong> La cobertura actual está muy por debajo del umbral mínimo. Se requiere aumentar significativamente los casos de prueba.
+    </div>
+
+    <!-- TABLA 3: RESULTADOS DE TESTS -->
+    <h2>Tabla 3: Resultados de Ejecución de Tests</h2>
+    <table>
+        <tr>
+            <th>Métrica</th>
+            <th>Fase 1</th>
+            <th>Fase 2</th>
+            <th>Observaciones</th>
+        </tr>
+        <tr>
+            <td>Total de Tests</td>
+            <td>12</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Tests unitarios e integración</td>
+        </tr>
+        <tr>
+            <td>Tests Exitosos ✅</td>
+            <td class="valor-ok">2</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Tests que pasaron correctamente</td>
+        </tr>
+        <tr>
+            <td>Tests Fallidos ❌</td>
+            <td class="valor-critico">10</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Requieren corrección</td>
+        </tr>
+        <tr>
+            <td>Test Suites Totales</td>
+            <td>13</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Archivos de test ejecutados</td>
+        </tr>
+        <tr>
+            <td>Test Suites Fallidas</td>
+            <td class="valor-critico">13</td>
+            <td class="pendiente">Pendiente</td>
+            <td>Todas las suites tienen fallos</td>
+        </tr>
+        <tr>
+            <td><strong>Tasa de Éxito</strong></td>
+            <td class="valor-critico"><strong>16.67%</strong></td>
+            <td class="pendiente">Pendiente</td>
+            <td><strong>Meta: > 90%</strong></td>
+        </tr>
+    </table>
+
+    <div class="nota">
+        <strong>Fórmula de Tasa de Éxito:</strong><br>
+        <span class="formula">Tasa de Éxito (%) = (Tests Pasados / Total Tests) × 100</span><br>
+        <span class="formula">Fase 1: (2 / 12) × 100 = 16.67%</span>
+    </div>
+
+    <!-- TABLA 4: ANÁLISIS DE VULNERABILIDADES -->
+    <h2>Tabla 4: Análisis de Vulnerabilidades (npm audit)</h2>
+    <table>
+        <tr>
+            <th>Severidad</th>
+            <th>Fase 1</th>
+            <th>Fase 2</th>
+            <th>Δ</th>
+            <th>Criticidad</th>
+        </tr>
+        <tr>
+            <td>Critical</td>
+            <td class="valor-ok">0</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>🔴 Muy Alta</td>
+        </tr>
+        <tr>
+            <td>High</td>
+            <td class="valor-critico">3</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>🔴 Alta</td>
+        </tr>
+        <tr>
+            <td>Moderate</td>
+            <td class="valor-warning">2</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>🟡 Media</td>
+        </tr>
+        <tr>
+            <td>Low</td>
+            <td class="valor-ok">0</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>🟢 Baja</td>
+        </tr>
+        <tr>
+            <td>Info</td>
+            <td class="valor-ok">0</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>🔵 Informativa</td>
+        </tr>
+        <tr>
+            <td><strong>Total Vulnerabilidades</strong></td>
+            <td class="valor-warning"><strong>5</strong></td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>-</td>
+        </tr>
+    </table>
+
+    <div class="nota">
+        <strong>IVC - Índice de Vulnerabilidades Críticas:</strong><br>
+        <span class="formula">IVC = ((Vulnerabilidades Critical + High) / Total Dependencias) × 100</span><br>
+        <strong>Valor Actual:</strong> Pendiente de calcular con total de dependencias<br>
+        <strong>Meta:</strong> IVC < 5% (Aceptable); IVC < 2% (Óptimo)
+    </div>
+
+    <!-- TABLA 5: CALIDAD DEL CÓDIGO (ESLint) -->
+    <h2>Tabla 5: Calidad del Código (ESLint)</h2>
+    <table>
+        <tr>
+            <th>Métrica</th>
+            <th>Fase 1</th>
+            <th>Fase 2</th>
+            <th>Δ</th>
+            <th>Meta</th>
+        </tr>
+        <tr>
+            <td>Errores ESLint</td>
+            <td class="valor-critico">3,972</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>0</td>
+        </tr>
+        <tr>
+            <td>Warnings ESLint</td>
+            <td class="valor-warning">158</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>< 20</td>
+        </tr>
+        <tr>
+            <td>Total Issues</td>
+            <td class="valor-critico">4,130</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>< 50</td>
+        </tr>
+        <tr>
+            <td>Archivos con Errores</td>
+            <td class="valor-critico">33 de 52</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>< 5%</td>
+        </tr>
+        <tr>
+            <td>Funciones con Alta Complejidad</td>
+            <td class="pendiente">Pendiente SonarQube</td>
+            <td class="pendiente">Pendiente</td>
+            <td class="pendiente">-</td>
+            <td>0</td>
+        </tr>
+    </table>
+
+    <div class="nota">
+        <strong>Principales Tipos de Errores Detectados:</strong>
+        <ul>
+            <li>Problemas de sintaxis y estilo de código</li>
+            <li>Variables no utilizadas</li>
+            <li>Imports incorrectos o no usados</li>
+            <li>Problemas de seguridad detectados por eslint-plugin-security</li>
+            <li>Incumplimiento de reglas airbnb-base</li>
+        </ul>
+    </div>
+
+    <!-- TABLA 6: MÉTRICAS ISO 9001 -->
+    <h2>Tabla 6: Métricas ISO 9001:2015</h2>
+    <table>
+        <tr>
+            <th>Métrica ISO 9001</th>
+            <th>Fórmula</th>
+            <th>Fase 1</th>
+            <th>Fase 2</th>
+            <th>Meta</th>
+        </tr>
+        <tr>
+            <td><strong>ICP</strong><br>Índice de Cumplimiento de Procesos</td>
+            <td class="formula">(Archivos sin errores / Total archivos) × 100</td>
+            <td class="valor-critico">36.54%</td>
+            <td class="pendiente">Pendiente</td>
+            <td>> 90%</td>
+        </tr>
+        <tr>
+            <td><strong>NC</strong><br>No Conformidades</td>
+            <td class="formula">Errores ESLint + Tests Fallidos</td>
+            <td class="valor-critico">3,982</td>
+            <td class="pendiente">Pendiente</td>
+            <td>< 10</td>
+        </tr>
+        <tr>
+            <td><strong>MTBF</strong><br>Mean Time Between Failures</td>
+            <td class="formula">Tiempo Total / Número de Fallos</td>
+            <td class="pendiente">Requiere datos de producción</td>
+            <td class="pendiente">Pendiente</td>
+            <td>> 720 h</td>
+        </tr>
+        <tr>
+            <td><strong>TPR</strong><br>Tiempo Promedio de Respuesta</td>
+            <td class="formula">Σ(Tiempos de Respuesta) / N Requests</td>
+            <td class="pendiente">Pendiente JMeter</td>
+            <td class="pendiente">Pendiente</td>
+            <td>< 200 ms</td>
+        </tr>
+        <tr>
+            <td><strong>IVC</strong><br>Índice Vulnerabilidades Críticas</td>
+            <td class="formula">(Vuln. Critical + High) / Total Deps × 100</td>
+            <td class="pendiente">Pendiente cálculo</td>
+            <td class="pendiente">Pendiente</td>
+            <td>< 5%</td>
+        </tr>
+        <tr>
+            <td><strong>CC</strong><br>Complejidad Ciclomática</td>
+            <td class="formula">SonarQube Analysis</td>
+            <td class="pendiente">Pendiente SonarQube</td>
+            <td class="pendiente">Pendiente</td>
+            <td>< 10</td>
+        </tr>
+        <tr>
+            <td><strong>Cobertura de Código</strong></td>
+            <td class="formula">Promedio de coberturas Jest</td>
+            <td class="valor-critico">15.46%</td>
+            <td class="pendiente">Pendiente</td>
+            <td>> 80%</td>
+        </tr>
+    </table>
+
+    <!-- TABLA 7: DIAGNÓSTICO Y ACCIONES CORRECTIVAS -->
+    <h2>Tabla 7: Diagnóstico y Acciones Correctivas Requeridas</h2>
+    <table>
+        <tr>
+            <th>Área</th>
+            <th>Problema Identificado</th>
+            <th>Severidad</th>
+            <th>Acción Correctiva</th>
+        </tr>
+        <tr>
+            <td>Tests</td>
+            <td>83.33% de tests fallando (10/12)</td>
+            <td class="valor-critico">CRÍTICA</td>
+            <td>Corregir conexión a BD, refactorizar tests, configurar mocks</td>
+        </tr>
+        <tr>
+            <td>Cobertura</td>
+            <td>15.46% cobertura (Meta: >80%)</td>
+            <td class="valor-critico">CRÍTICA</td>
+            <td>Aumentar casos de prueba, cubrir branches y funciones</td>
+        </tr>
+        <tr>
+            <td>ESLint</td>
+            <td>3,972 errores de código</td>
+            <td class="valor-critico">CRÍTICA</td>
+            <td>Aplicar eslint --fix, corregir manualmente issues críticos</td>
+        </tr>
+        <tr>
+            <td>ICP</td>
+            <td>36.54% cumplimiento (Meta: >90%)</td>
+            <td class="valor-critico">ALTA</td>
+            <td>Corregir errores de sintaxis, mejorar calidad de código</td>
+        </tr>
+        <tr>
+            <td>Vulnerabilidades</td>
+            <td>3 vulnerabilidades HIGH</td>
+            <td class="valor-warning">MEDIA</td>
+            <td>Actualizar dependencias con npm audit fix</td>
+        </tr>
+        <tr>
+            <td>Documentación</td>
+            <td>22.92% comentarios (Meta: >30%)</td>
+            <td class="valor-warning">MEDIA</td>
+            <td>Añadir JSDoc a funciones y módulos</td>
+        </tr>
+        <tr>
+            <td>Performance</td>
+            <td>No hay métricas de rendimiento</td>
+            <td class="valor-warning">MEDIA</td>
+            <td>Ejecutar tests de carga con JMeter</td>
+        </tr>
+        <tr>
+            <td>Complejidad</td>
+            <td>No hay análisis de complejidad</td>
+            <td class="valor-warning">MEDIA</td>
+            <td>Configurar y ejecutar SonarQube</td>
+        </tr>
+    </table>
+
+    <!-- RESUMEN EJECUTIVO -->
+    <h2>Resumen Ejecutivo - Fase 1</h2>
+    <div class="nota">
+        <h3 style="margin-top: 0;">Estado General del Proyecto</h3>
+        <p><strong>Calificación Global:</strong> <span class="valor-critico">CRÍTICO - Requiere Intervención Inmediata</span></p>
+        
+        <p><strong>Hallazgos Principales:</strong></p>
+        <ul>
+            <li>✅ <strong>Positivo:</strong> Estructura de proyecto bien organizada (39 archivos, 2,246 líneas de código)</li>
+            <li>✅ <strong>Positivo:</strong> 0 vulnerabilidades críticas encontradas</li>
+            <li>❌ <strong>Crítico:</strong> 3,982 no conformidades detectadas (errores + tests fallidos)</li>
+            <li>❌ <strong>Crítico:</strong> 83.33% de tests fallando (10 de 12)</li>
+            <li>❌ <strong>Crítico:</strong> 15.46% de cobertura de código (requiere >80%)</li>
+            <li>⚠️ <strong>Advertencia:</strong> 3 vulnerabilidades HIGH pendientes de corrección</li>
+            <li>⚠️ <strong>Advertencia:</strong> 36.54% de cumplimiento de procesos (requiere >90%)</li>
+        </ul>
+        
+        <p><strong>Prioridades para Fase 2:</strong></p>
+        <ol>
+            <li><strong>Corregir tests fallidos:</strong> Resolver problemas de conexión a BD (error "Tenant or user not found")</li>
+            <li><strong>Aumentar cobertura:</strong> Añadir casos de prueba para alcanzar >80%</li>
+            <li><strong>Limpiar código:</strong> Corregir 3,972 errores de ESLint</li>
+            <li><strong>Actualizar dependencias:</strong> Resolver 3 vulnerabilidades HIGH</li>
+            <li><strong>Ejecutar análisis pendientes:</strong> SonarQube (CC) y JMeter (TPR)</li>
+        </ol>
+        
+        <p><strong>Tiempo Estimado de Corrección:</strong> 40-60 horas de trabajo</p>
+    </div>
+
+</body>
+</html>

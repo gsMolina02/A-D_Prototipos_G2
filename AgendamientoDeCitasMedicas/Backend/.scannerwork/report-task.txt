@@ -1,0 +1,6 @@
+projectKey=tareaMetrica
+serverUrl=http://localhost:9000
+serverVersion=26.1.0.118079
+dashboardUrl=http://localhost:9000/dashboard?id=tareaMetrica
+ceTaskId=3c22fd07-70ca-469a-ab7a-fb432d5b098e
+ceTaskUrl=http://localhost:9000/api/ce/task?id=3c22fd07-70ca-469a-ab7a-fb432d5b098e

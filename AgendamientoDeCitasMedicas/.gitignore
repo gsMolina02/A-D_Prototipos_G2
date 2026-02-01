@@ -1,0 +1,23 @@
+# Environment variables (NUNCA subir!)
+.env
+.env.local
+.env.production
+VARIABLES_VERCEL.env
+
+# Dependencies
+node_modules/
+
+# Build outputs
+build/
+dist/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/

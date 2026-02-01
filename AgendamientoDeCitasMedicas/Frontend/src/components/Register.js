@@ -363,6 +363,7 @@ const Register = ({ onNavigate, history }) => {
         >
           <option value="paciente">Paciente</option>
           <option value="doctor">Doctor</option>
+          <option value="asistente">Asistente Organizacional</option>
         </select>
         <button type="submit" disabled={loading}>
           {loading ? 'Registrando...' : 'Registrarse'}
@@ -370,12 +371,21 @@ const Register = ({ onNavigate, history }) => {
       </form>
       
       {onNavigate ? (
-        <button 
-          onClick={() => onNavigate('login')}
-          className="link-button"
-        >
-          ¿Ya tienes una cuenta? Inicia sesión
-        </button>
+        <>
+          <button 
+            onClick={() => onNavigate('login')}
+            className="link-button"
+          >
+            ¿Ya tienes una cuenta? Inicia sesión
+          </button>
+          <button 
+            onClick={() => onNavigate('landing')}
+            className="link-button back-button"
+            style={{ marginTop: '10px', color: '#6b7280' }}
+          >
+            ← Volver al inicio
+          </button>
+        </>
       ) : (
         <a href="/login">¿Ya tienes una cuenta? Inicia sesión</a>
       )}
